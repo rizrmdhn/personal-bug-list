@@ -6,6 +6,7 @@ export async function fetchKey(req: NextRequest) {
   const authToken = req.headers.get("Authorization");
   if (!authToken) {
     ApiError.unauthorized();
+    return;
   }
 
   // Get app key and app name from request headers
@@ -13,6 +14,7 @@ export async function fetchKey(req: NextRequest) {
   const appName = req.headers.get("X-App-Name");
   if (!appKey || !appName) {
     ApiError.badRequest("App credentials not provided");
+    return;
   }
 
   return { appKey, appName, authToken };
