@@ -16,3 +16,7 @@ const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
 if (env.NODE_ENV !== "production") globalForDb.conn = conn;
 
 export const db = drizzle(conn, { schema });
+
+export type DB = typeof db;
+
+export type DBType = Parameters<Parameters<typeof db.transaction>[0]>[0];
