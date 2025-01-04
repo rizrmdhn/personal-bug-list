@@ -108,6 +108,8 @@ export const applications = createTable(
   (table) => [
     unique("application_key_unique").on(table.key),
     index("application_key_idx").using("btree", table.key),
+    index("application_name_idx").using("btree", table.name),
+    index("application_secret_idx").using("btree", table.secret),
     index("application_idx").using("btree", table.id),
   ],
 );

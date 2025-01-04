@@ -9,3 +9,7 @@ export const bugRelations = relations(bugs, ({ one, many }) => ({
   application: one(applications),
   images: many(bugImages),
 }));
+
+export const bugImageRelations = relations(bugImages, ({ one }) => ({
+  bug: one(bugs),
+}));

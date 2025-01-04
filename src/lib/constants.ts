@@ -31,4 +31,10 @@ export const AVALIABLE_BUG_STATUS = [
   "PROCESSING",
   "ACCEPTED",
   "REJECTED",
+  "FIXED",
+  "CLOSED",
+  "REOPENED",
+  "DUPLICATE",
+  "WONTFIX",
+  "INVALID",
 ] as const;
