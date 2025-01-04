@@ -1,20 +1,22 @@
-import {
-  type ApiErrorResponse,
-  type ApiResponse,
-  type Meta,
-} from "@/types/api-response.types";
+import { type Meta } from "@/types/api-response.types";
 
-export function formatResponse<T>(meta: Meta, data: T): ApiResponse<T> {
-  return {
-    meta,
-    data,
-  };
+export function formatResponse<T>(meta: Meta, data: T): Response {
+  return Response.json(
+    {
+      meta,
+      data,
+    },
+    { status: meta.code, statusText: meta.message },
+  );
 }
 
-export function formatErrorResponse(meta: Meta): ApiErrorResponse {
-  return {
-    meta,
-  };
+export function formatErrorResponse(meta: Meta): Response {
+  return Response.json(
+    {
+      meta,
+    },
+    { status: meta.code, statusText: meta.message },
+  );
 }
 
 export function createStringFormattedResponse<T>(
@@ -34,3 +36,23 @@ export function createStringFormattedResponse<T>(
     ),
   );
 }
+
+export function formatError(message: string, code = 500): Response {
+  return formatErrorResponse({
+    code,
+    status: "error",
+    message,
+  });
+}
+
+// Common error responses
+export const unauthorizedError = () => formatError("Unauthorized", 401);
+
+export const badRequestError = (message = "Bad Request") =>
+  formatError(message, 400);
+
+export const notFoundError = (resource = "Resource") =>
+  formatError(`${resource} not found`, 404);
+
+export const serverError = (message = "Internal Server Error") =>
+  formatError(message, 500);
