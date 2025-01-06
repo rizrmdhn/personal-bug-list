@@ -26,12 +26,12 @@ export function NavMain({ items }: { items: NavMainItem[] }) {
   // Helper function to check if a URL matches the current path
   const isUrlActive = (url: string): boolean => {
     // Exact match for root app path
-    if (url === "/app" && path === "/app") {
+    if (url === "/dashboard" && path === "/dashboard") {
       return true;
     }
     // For other paths, check if the current path starts with the URL
     // but make sure it's at a path boundary
-    if (url !== "/app") {
+    if (url !== "/dashboard") {
       return path === url;
     }
     return false;
