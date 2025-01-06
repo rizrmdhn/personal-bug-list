@@ -82,6 +82,34 @@ export const users = createTable(
   ],
 );
 
+export const sessions = createTable(
+  "sessions",
+  {
+    id: text("id").primaryKey().notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    expiresAt: timestamp("expires_at", {
+      withTimezone: true,
+      mode: "date",
+    }).notNull(),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (session) => {
+    return [
+      index("session_id_idx").on(session.id),
+      index("user_id_idx").on(session.userId),
+    ];
+  },
+);
+
 export const applications = createTable(
   "applications",
   {

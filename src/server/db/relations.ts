@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm/relations";
-import { applications, bugImages, bugs } from "./schema";
+import { applications, bugImages, bugs, sessions, users } from "./schema";
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  users: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
 
 export const applicationRelations = relations(applications, ({ many }) => ({
   bugs: many(bugs),
