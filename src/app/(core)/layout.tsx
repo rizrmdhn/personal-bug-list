@@ -5,6 +5,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { getCurrentSession } from "@/lib/sessions";
+import { type NavMainItem } from "@/types/side-bar.types";
+import { HomeIcon, ListTodo } from "lucide-react";
 import { redirect } from "next/navigation";
 
 interface CoreLayoutProps {
@@ -18,9 +20,24 @@ export default async function CoreLayout({ children }: CoreLayoutProps) {
     redirect("/sign-in");
   }
 
+  const menuItems: NavMainItem[] = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: <HomeIcon />, // JSX component
+      items: [], // No sub-items for Dashboard
+    },
+    {
+      title: "Applications",
+      url: "/applications",
+      icon: <ListTodo />, // JSX component
+      items: [], // No sub-items for Dashboard
+    },
+  ];
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar data={menuItems} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">

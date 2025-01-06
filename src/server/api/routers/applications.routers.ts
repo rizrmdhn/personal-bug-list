@@ -12,7 +12,6 @@ export const applicationsRouter = createTRPCRouter({
     )
     .query(async ({ input: { limit, page } }) => {
       const result = await getApplicationList(page, limit);
-      console.log("🚀 ~ .query ~ result:", result);
 
       return result;
     }),

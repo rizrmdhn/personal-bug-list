@@ -3,7 +3,7 @@
 import { api } from "@/trpc/react";
 
 export default function Page() {
-  const [applications] = api.applications.list.useSuspenseQuery({
+  const { data } = api.applications.list.useQuery({
     limit: 10,
     page: 1,
   });
