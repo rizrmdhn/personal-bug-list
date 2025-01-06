@@ -1,4 +1,13 @@
+"use client";
+
+import { api } from "@/trpc/react";
+
 export default function Page() {
+  const [applications] = api.applications.list.useSuspenseQuery({
+    limit: 10,
+    page: 1,
+  });
+
   return (
     <>
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">
