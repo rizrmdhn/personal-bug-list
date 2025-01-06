@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form";
+import LoginForm from "@/components/login-form";
 import generateMetadata from "@/lib/generate-metadata";
 
 export const metadata = generateMetadata({
