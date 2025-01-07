@@ -15,7 +15,7 @@ export interface PaginationResult<T> {
   readonly hasPrevPage: boolean;
   readonly currentPage: number;
   readonly totalPages: number;
-  readonly pages: ReadonlyArray<number | "...">;
+  readonly pages: (number | "...")[];
 }
 
 export interface CursorPaginationResult<T> {
@@ -30,12 +30,6 @@ export interface PaginationOptions {
   readonly page?: number;
   readonly limit?: number;
   readonly orderBy?: PgColumn | SQL | SQL.Aliased;
-}
-
-export interface CursorPaginationOptions {
-  readonly cursor?: string;
-  readonly limit?: number;
-  readonly direction?: "forward" | "backward";
 }
 
 type PaginationDirection = "forward" | "backward";
@@ -64,22 +58,27 @@ interface CursorQueryOptions {
 function generatePageNumbers(
   currentPage: number,
   totalPages: number,
-): ReadonlyArray<number | "..."> {
+): (number | "...")[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
-  const pages: Array<number | "..."> = [1];
+  const pages: Array<number | "..."> = [];
+  pages.push(1);
 
   if (currentPage > 3) {
     pages.push("...");
   }
 
-  const rangeStart = Math.max(2, currentPage <= 3 ? 2 : currentPage - 1);
-  const rangeEnd = Math.min(
-    totalPages - 1,
-    currentPage >= totalPages - 2 ? totalPages - 1 : currentPage + 1,
-  );
+  let rangeStart = Math.max(2, currentPage - 1);
+  let rangeEnd = Math.min(totalPages - 1, currentPage + 1);
+
+  if (currentPage <= 3) {
+    rangeEnd = 4;
+  }
+  if (currentPage >= totalPages - 2) {
+    rangeStart = totalPages - 3;
+  }
 
   for (let i = rangeStart; i <= rangeEnd; i++) {
     pages.push(i);
@@ -89,8 +88,11 @@ function generatePageNumbers(
     pages.push("...");
   }
 
-  pages.push(totalPages);
-  return Object.freeze(pages);
+  if (totalPages > 1) {
+    pages.push(totalPages);
+  }
+
+  return pages;
 }
 
 function buildPaginatedQuery<T extends PgSelect>(
@@ -103,6 +105,54 @@ function buildPaginatedQuery<T extends PgSelect>(
     .orderBy(orderByColumn)
     .limit(limit)
     .offset((page - 1) * limit);
+}
+
+export async function paginate<
+  T extends PgSelect,
+  R extends Record<string, unknown>,
+>(
+  baseQuery: T,
+  table: PgTable,
+  options: PaginationOptions = {},
+): Promise<PaginationResult<R>> {
+  const {
+    page = 1,
+    limit = 10,
+    orderBy = asc(sql`created_at`), // Default to a generic created_at column, should be overridden by caller
+  } = options;
+
+  const validPage = Math.max(1, page);
+  const validLimit = Math.max(1, limit);
+
+  const paginatedQuery = buildPaginatedQuery(
+    baseQuery,
+    orderBy,
+    validPage,
+    validLimit,
+  );
+
+  const countQuery = db
+    .select({
+      total: sql<number>`count(*)::integer`,
+    })
+    .from(table);
+
+  const [data, [countResult]] = await Promise.all([paginatedQuery, countQuery]);
+
+  const total = countResult?.total ?? 0;
+  const totalPages = Math.ceil(total / validLimit);
+
+  return Object.freeze({
+    data: data as R[],
+    total,
+    page: validPage,
+    limit: validLimit,
+    hasNextPage: validPage < totalPages,
+    hasPrevPage: validPage > 1,
+    currentPage: validPage,
+    totalPages,
+    pages: generatePageNumbers(validPage, totalPages),
+  });
 }
 
 function encodeCursor(value: string | number | Date): string {
@@ -145,54 +195,6 @@ function buildCursorQuery<T extends PgSelect>(
   return query
     .orderBy(direction === "forward" ? asc(cursorColumn) : desc(cursorColumn))
     .limit(limit + 1);
-}
-
-export async function paginate<
-  T extends PgSelect,
-  R extends Record<string, unknown>,
->(
-  baseQuery: T,
-  table: PgTable,
-  options: PaginationOptions = {},
-): Promise<PaginationResult<R>> {
-  const {
-    page = 1,
-    limit = 10,
-    orderBy = asc(baseQuery as unknown as PgColumn),
-  } = options;
-
-  const validPage = Math.max(1, page);
-  const validLimit = Math.max(1, limit);
-
-  const paginatedQuery = buildPaginatedQuery(
-    baseQuery,
-    orderBy,
-    validPage,
-    validLimit,
-  );
-
-  const countQuery = db
-    .select({
-      total: sql<number>`count(*)::integer`,
-    })
-    .from(table);
-
-  const [data, [countResult]] = await Promise.all([paginatedQuery, countQuery]);
-
-  const total = countResult?.total ?? 0;
-  const totalPages = Math.ceil(total / validLimit);
-
-  return Object.freeze({
-    data: data as R[],
-    total,
-    page: validPage,
-    limit: validLimit,
-    hasNextPage: validPage < totalPages,
-    hasPrevPage: validPage > 1,
-    currentPage: validPage,
-    totalPages,
-    pages: generatePageNumbers(validPage, totalPages),
-  });
 }
 
 export async function paginateWithCursor<
