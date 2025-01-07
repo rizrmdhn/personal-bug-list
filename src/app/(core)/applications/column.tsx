@@ -1,8 +1,19 @@
+import { DataTableColumnHeader } from "@/components/data-table-column-header";
 import { type SelectApplication } from "@/types/applications.types";
 import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 export const columns: ColumnDef<SelectApplication>[] = [
+  {
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="No" />
+    ),
+    accessorKey: "No",
+    accessorFn: (_, rowIndex) => rowIndex + 1,
+    id: "No",
+    sortingFn: "basic",
+    cell: (info) => info.getValue(),
+  },
   {
     accessorKey: "name",
     header: "Name",

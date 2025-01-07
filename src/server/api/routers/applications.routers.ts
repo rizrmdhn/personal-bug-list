@@ -28,12 +28,18 @@ export const applicationsRouter = createTRPCRouter({
       z.object({
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(50).default(10),
+        sortBy: z.string().optional(),
+        orderBy: z.enum(["asc", "desc"]).optional(),
       }),
     )
-    .query(async ({ input: { page, pageSize } }) => {
+    .query(async ({ input: { page, pageSize, sortBy, orderBy } }) => {
       const result = await getApplicationList({
         limit: pageSize,
         page,
+        sortBy,
+        orderBy,
+        orderDirection: orderBy,
+        sortDirection: orderBy,
       });
 
       return result;

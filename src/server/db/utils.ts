@@ -16,6 +16,10 @@ export interface PaginationResult<T> {
   readonly currentPage: number;
   readonly totalPages: number;
   readonly pages: (number | "...")[];
+  readonly sortBy?: string;
+  readonly sortDirection?: SortDirection;
+  readonly orderBy?: string;
+  readonly orderDirection?: SortDirection;
 }
 
 export interface CursorPaginationResult<T> {
@@ -26,10 +30,20 @@ export interface CursorPaginationResult<T> {
   readonly hasPrevPage: boolean;
 }
 
+export type SortDirection = "asc" | "desc";
+
+export interface SortableColumn {
+  column: PgColumn;
+  name: string;
+}
+
 export interface PaginationOptions {
   readonly page?: number;
   readonly limit?: number;
-  readonly orderBy?: PgColumn | SQL | SQL.Aliased;
+  readonly sortBy?: string;
+  readonly sortDirection?: SortDirection;
+  readonly orderBy?: string;
+  readonly orderDirection?: SortDirection;
 }
 
 type PaginationDirection = "forward" | "backward";
@@ -95,6 +109,13 @@ function generatePageNumbers(
   return pages;
 }
 
+function getSortOrder(
+  column: PgColumn,
+  direction: SortDirection = "asc",
+): SQL | SQL.Aliased {
+  return direction === "asc" ? asc(column) : desc(column);
+}
+
 function buildPaginatedQuery<T extends PgSelect>(
   qb: T,
   orderByColumn: PgColumn | SQL | SQL.Aliased,
@@ -113,20 +134,36 @@ export async function paginate<
 >(
   baseQuery: T,
   table: PgTable,
+  sortableColumns: SortableColumn[],
   options: PaginationOptions = {},
 ): Promise<PaginationResult<R>> {
   const {
     page = 1,
     limit = 10,
-    orderBy = asc(sql`created_at`), // Default to a generic created_at column, should be overridden by caller
+    sortBy,
+    sortDirection = "asc",
+    orderBy,
+    orderDirection = "asc",
   } = options;
 
   const validPage = Math.max(1, page);
   const validLimit = Math.max(1, limit);
 
+  // Find the sortable column that matches either sortBy or orderBy parameter
+  const sortColumn = sortableColumns.find(
+    (col) => col.name === (orderBy ?? sortBy),
+  );
+
+  // Use the matched column or default to the first sortable column, or fallback to a default SQL order
+  const orderByColumn = sortColumn
+    ? getSortOrder(sortColumn.column, orderDirection || sortDirection)
+    : sortableColumns[0]
+      ? getSortOrder(sortableColumns[0].column, orderDirection || sortDirection)
+      : sql`1`;
+
   const paginatedQuery = buildPaginatedQuery(
     baseQuery,
-    orderBy,
+    orderByColumn,
     validPage,
     validLimit,
   );
@@ -152,6 +189,10 @@ export async function paginate<
     currentPage: validPage,
     totalPages,
     pages: generatePageNumbers(validPage, totalPages),
+    sortBy: sortColumn?.name,
+    sortDirection,
+    orderBy: sortColumn?.name,
+    orderDirection,
   });
 }
 

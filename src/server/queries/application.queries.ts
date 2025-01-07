@@ -1,5 +1,5 @@
 import { applications } from "@/server/db/schema";
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import {
   type CursorPaginationInput,
@@ -7,6 +7,7 @@ import {
   paginate,
   paginateWithCursor,
   type PaginationOptions,
+  type SortableColumn,
 } from "../db/utils";
 import { type SelectApplication } from "@/types/applications.types";
 
@@ -50,16 +51,20 @@ export async function getApplicationList(options: PaginationOptions) {
     // Create base query without $dynamic()
     const baseQuery = db.select().from(applications).$dynamic();
 
-    // Provide a specific column for ordering
-    const paginationOptions = {
-      ...options,
-      orderBy: options.orderBy ?? asc(applications.createdAt), // Assuming applications has a createdAt column
-    };
+    const sortableColumns: SortableColumn[] = [
+      { column: applications.createdAt, name: "createdAt" },
+      { column: applications.updatedAt, name: "updatedAt" },
+      { column: applications.name, name: "name" },
+      { column: applications.key, name: "key" },
+      { column: applications.isActive, name: "isActive" },
+      // Add other sortable columns as needed
+    ];
 
     return await paginate<typeof baseQuery, SelectApplication>(
       baseQuery,
       applications,
-      paginationOptions,
+      sortableColumns,
+      options,
     );
   } catch (error) {
     console.error("Application list fetch error:", error);
