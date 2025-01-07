@@ -1,4 +1,4 @@
-import { type SQL, asc, sql } from "drizzle-orm";
+import { type SQL, asc, desc, sql } from "drizzle-orm";
 import {
   type PgTable,
   type PgColumn,
@@ -6,55 +6,81 @@ import {
 } from "drizzle-orm/pg-core";
 import { db } from ".";
 
-export type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-  currentPage: number;
-  totalPages: number;
-  pages: (number | string)[]; // Can be number or "..." string
-};
+export interface PaginationResult<T> {
+  readonly data: T[];
+  readonly total: number;
+  readonly page: number;
+  readonly limit: number;
+  readonly hasNextPage: boolean;
+  readonly hasPrevPage: boolean;
+  readonly currentPage: number;
+  readonly totalPages: number;
+  readonly pages: ReadonlyArray<number | "...">;
+}
 
-export type PaginationOptions = {
-  page?: number;
-  limit?: number;
-  orderBy?: PgColumn | SQL | SQL.Aliased;
-};
+export interface CursorPaginationResult<T> {
+  readonly data: T[];
+  readonly nextCursor: string | null;
+  readonly prevCursor: string | null;
+  readonly hasNextPage: boolean;
+  readonly hasPrevPage: boolean;
+}
+
+export interface PaginationOptions {
+  readonly page?: number;
+  readonly limit?: number;
+  readonly orderBy?: PgColumn | SQL | SQL.Aliased;
+}
+
+export interface CursorPaginationOptions {
+  readonly cursor?: string;
+  readonly limit?: number;
+  readonly direction?: "forward" | "backward";
+}
+
+type PaginationDirection = "forward" | "backward";
+
+export interface CursorPaginationResult<T> {
+  readonly data: T[];
+  readonly nextCursor: string | null;
+  readonly prevCursor: string | null;
+  readonly hasNextPage: boolean;
+  readonly hasPrevPage: boolean;
+}
+
+export interface CursorPaginationInput {
+  readonly cursor?: string;
+  readonly limit: number;
+  readonly direction: PaginationDirection;
+}
+
+interface CursorQueryOptions {
+  readonly cursorColumn: PgColumn;
+  readonly cursor?: string;
+  readonly limit: number;
+  readonly direction: PaginationDirection;
+}
 
 function generatePageNumbers(
   currentPage: number,
   totalPages: number,
-): (number | string)[] {
-  // Show all pages if total pages is 7 or less
+): ReadonlyArray<number | "..."> {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
-  const pages: (number | string)[] = [];
-
-  // Always show first page
-  pages.push(1);
+  const pages: Array<number | "..."> = [1];
 
   if (currentPage > 3) {
     pages.push("...");
   }
 
-  // Calculate range around current page
-  let rangeStart = Math.max(2, currentPage - 1);
-  let rangeEnd = Math.min(totalPages - 1, currentPage + 1);
+  const rangeStart = Math.max(2, currentPage <= 3 ? 2 : currentPage - 1);
+  const rangeEnd = Math.min(
+    totalPages - 1,
+    currentPage >= totalPages - 2 ? totalPages - 1 : currentPage + 1,
+  );
 
-  // Adjust range if at the edges
-  if (currentPage <= 3) {
-    rangeEnd = 4;
-  }
-  if (currentPage >= totalPages - 2) {
-    rangeStart = totalPages - 3;
-  }
-
-  // Add range numbers
   for (let i = rangeStart; i <= rangeEnd; i++) {
     pages.push(i);
   }
@@ -63,10 +89,8 @@ function generatePageNumbers(
     pages.push("...");
   }
 
-  // Always show last page
   pages.push(totalPages);
-
-  return pages;
+  return Object.freeze(pages);
 }
 
 function buildPaginatedQuery<T extends PgSelect>(
@@ -74,49 +98,91 @@ function buildPaginatedQuery<T extends PgSelect>(
   orderByColumn: PgColumn | SQL | SQL.Aliased,
   page = 1,
   limit = 10,
-) {
+): T {
   return qb
     .orderBy(orderByColumn)
     .limit(limit)
     .offset((page - 1) * limit);
 }
 
-export async function paginate<T extends PgSelect, R>(
+function encodeCursor(value: string | number | Date): string {
+  if (value instanceof Date) {
+    return Buffer.from(value.toISOString()).toString("base64");
+  }
+  return Buffer.from(String(value)).toString("base64");
+}
+
+function decodeCursor(cursor: string): string {
+  try {
+    return Buffer.from(cursor, "base64").toString("utf-8");
+  } catch {
+    throw new Error("Invalid cursor format");
+  }
+}
+
+function buildCursorQuery<T extends PgSelect>(
+  qb: T,
+  options: CursorQueryOptions,
+): T {
+  const { cursorColumn, cursor, limit, direction } = options;
+  let query = qb;
+
+  if (cursor) {
+    try {
+      const decodedCursor = decodeCursor(cursor);
+      const operator = direction === "forward" ? ">" : "<";
+      query = query.where(
+        sql`${cursorColumn} ${sql.raw(operator)} ${sql.raw(`'${decodedCursor}'`)}::timestamptz`,
+      );
+    } catch (error) {
+      console.error("Cursor decode error:", error);
+      throw new Error(
+        `Invalid cursor format: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  }
+
+  return query
+    .orderBy(direction === "forward" ? asc(cursorColumn) : desc(cursorColumn))
+    .limit(limit + 1);
+}
+
+export async function paginate<
+  T extends PgSelect,
+  R extends Record<string, unknown>,
+>(
   baseQuery: T,
   table: PgTable,
   options: PaginationOptions = {},
 ): Promise<PaginationResult<R>> {
-  const { page = 1, limit = 10, orderBy } = options;
+  const {
+    page = 1,
+    limit = 10,
+    orderBy = asc(baseQuery as unknown as PgColumn),
+  } = options;
 
-  // Ensure we have valid pagination parameters
   const validPage = Math.max(1, page);
   const validLimit = Math.max(1, limit);
 
-  // Build the paginated query for data
   const paginatedQuery = buildPaginatedQuery(
     baseQuery,
-    orderBy ?? asc(baseQuery as unknown as PgColumn),
+    orderBy,
     validPage,
     validLimit,
   );
 
-  // Create a count query using SQL template literal
   const countQuery = db
     .select({
       total: sql<number>`count(*)::integer`,
     })
     .from(table);
 
-  // Execute both queries in parallel
   const [data, [countResult]] = await Promise.all([paginatedQuery, countQuery]);
 
   const total = countResult?.total ?? 0;
   const totalPages = Math.ceil(total / validLimit);
 
-  // Generate the pages array
-  const pages = generatePageNumbers(validPage, totalPages);
-
-  return {
+  return Object.freeze({
     data: data as R[],
     total,
     page: validPage,
@@ -125,6 +191,58 @@ export async function paginate<T extends PgSelect, R>(
     hasPrevPage: validPage > 1,
     currentPage: validPage,
     totalPages,
-    pages,
-  };
+    pages: generatePageNumbers(validPage, totalPages),
+  });
+}
+
+export async function paginateWithCursor<
+  T extends PgSelect,
+  R extends Record<string, unknown> & Record<P, string>,
+  P extends string,
+>(
+  baseQuery: T,
+  cursorColumn: PgColumn & { name: string },
+  input: CursorPaginationInput,
+): Promise<CursorPaginationResult<R>> {
+  const { cursor, limit, direction } = input;
+  const validLimit = Math.max(1, limit);
+
+  try {
+    const query = buildCursorQuery(baseQuery, {
+      cursorColumn,
+      cursor,
+      limit: validLimit,
+      direction,
+    });
+
+    const results = await query;
+    const hasNextPage = results.length > validLimit;
+    const items = results.slice(0, validLimit) as R[];
+
+    // Convert snake_case column name to camelCase for accessing the result
+    const camelCaseProperty = cursorColumn.name
+      .split("_")
+      .map((part, index) =>
+        index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1),
+      )
+      .join("") as P;
+
+    const nextCursor =
+      hasNextPage && items.length > 0
+        ? encodeCursor(items[items.length - 1]?.[camelCaseProperty] ?? "")
+        : null;
+
+    return Object.freeze({
+      data: items,
+      nextCursor,
+      prevCursor: cursor ?? null,
+      hasNextPage,
+      hasPrevPage: !!cursor,
+    });
+  } catch (error) {
+    console.error("Pagination error:", error);
+    throw new Error(
+      `Failed to fetch data: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }
