@@ -2,8 +2,12 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
   createApplication,
+  disableApplication,
+  enableApplication,
   getApplicationList,
   getCursorBasedApplicationList,
+  revokeApplication,
+  undoRevokeApplication,
 } from "@/server/queries/application.queries";
 import { createApplicationSchema } from "@/schema/application.schema";
 
@@ -62,6 +66,38 @@ export const applicationsRouter = createTRPCRouter({
       const result = await ctx.db.transaction(async (trx) => {
         return await createApplication(trx, input);
       });
+
+      return result;
+    }),
+
+  enable: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await enableApplication(input.id);
+
+      return result;
+    }),
+
+  disable: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await disableApplication(input.id);
+
+      return result;
+    }),
+
+  revoke: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await revokeApplication(input.id);
+
+      return result;
+    }),
+
+  undoRevoke: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await undoRevokeApplication(input.id);
 
       return result;
     }),

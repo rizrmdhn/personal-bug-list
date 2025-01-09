@@ -15,9 +15,9 @@ import { type createApplicationSchema } from "@/schema/application.schema";
 import generateApplicationCredentials from "@/lib/generate-credentials";
 import { hash } from "@node-rs/argon2";
 
-export async function getApplicationBySecret(secret: string) {
+export async function getApplicationById(id: string) {
   const app = await db.query.applications.findFirst({
-    where: eq(applications.secret, secret),
+    where: eq(applications.id, id),
   });
 
   return app;
@@ -31,12 +31,9 @@ export async function getApplicationByKeyAndName(key: string, name: string) {
   return app;
 }
 
-export async function getApplicationByKeyAndSecret(
-  key: string,
-  secret: string,
-) {
+export async function getApplicationByKey(key: string) {
   const app = await db.query.applications.findFirst({
-    where: and(eq(applications.key, key), eq(applications.secret, secret)),
+    where: eq(applications.key, key),
   });
 
   return app;
@@ -122,6 +119,112 @@ export async function createApplication(
   } catch (error) {
     throw new Error(
       `Failed to create application: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+export async function revokeApplication(id: string) {
+  try {
+    const app = await getApplicationById(id);
+
+    if (!app) {
+      throw new Error("Application not found");
+    }
+
+    const result = await db.transaction(async (tx) => {
+      await tx
+        .update(applications)
+        .set({ isRevoked: true })
+        .where(eq(applications.id, id))
+        .execute();
+
+      return true;
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to revoke application: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+export async function undoRevokeApplication(id: string) {
+  try {
+    const app = await getApplicationById(id);
+
+    if (!app) {
+      throw new Error("Application not found");
+    }
+
+    const result = await db.transaction(async (tx) => {
+      await tx
+        .update(applications)
+        .set({ isRevoked: false })
+        .where(eq(applications.id, id))
+        .execute();
+
+      return true;
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to undo revoke application: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
+    );
+  }
+}
+
+export async function disableApplication(id: string) {
+  try {
+    const app = await getApplicationById(id);
+
+    if (!app) {
+      throw new Error("Application not found");
+    }
+
+    const result = await db.transaction(async (tx) => {
+      await tx
+        .update(applications)
+        .set({ isActive: false })
+        .where(eq(applications.id, id))
+        .execute();
+
+      return true;
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to disable application: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+export async function enableApplication(id: string) {
+  try {
+    const app = await getApplicationById(id);
+
+    if (!app) {
+      throw new Error("Application not found");
+    }
+
+    const result = await db.transaction(async (tx) => {
+      await tx
+        .update(applications)
+        .set({ isActive: true })
+        .where(eq(applications.id, id))
+        .execute();
+
+      return true;
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to enable application: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
