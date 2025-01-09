@@ -11,7 +11,7 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Copy, LoaderCircle } from "lucide-react";
+import { Copy, Info, LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { createApplicationSchema } from "@/schema/application.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,7 @@ import { globalErrorToast, globalSuccessToast } from "@/lib/toast";
 import { useState } from "react";
 import { type SelectApplication } from "@/types/applications.types";
 import { Label } from "./ui/label";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 export default function CreateApplicationForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -50,6 +51,7 @@ export default function CreateApplicationForm() {
   });
 
   function onSubmit(values: z.infer<typeof createApplicationSchema>) {
+    if (createApplicationMutation.isPending || isSubmitted) return;
     createApplicationMutation.mutate(values);
   }
 
@@ -79,6 +81,14 @@ export default function CreateApplicationForm() {
             />
             {data && (
               <>
+                <Alert variant="destructive">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Heads up!</AlertTitle>
+                  <AlertDescription>
+                    Please save these credentials. You won&apos;t be able to see
+                    them again.
+                  </AlertDescription>
+                </Alert>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="appKey">App Key</Label>
                   <div className="relative">

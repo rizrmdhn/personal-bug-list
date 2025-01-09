@@ -13,6 +13,7 @@ import { type SelectApplication } from "@/types/applications.types";
 import { type z } from "zod";
 import { type createApplicationSchema } from "@/schema/application.schema";
 import generateApplicationCredentials from "@/lib/generate-credentials";
+import { hash } from "@node-rs/argon2";
 
 export async function getApplicationBySecret(secret: string) {
   const app = await db.query.applications.findFirst({
@@ -105,7 +106,7 @@ export async function createApplication(
       .values({
         name: input.name,
         key: key.appKey,
-        secret: key.appSecret,
+        secret: await hash(key.appSecret),
       })
       .returning()
       .execute();
@@ -114,7 +115,10 @@ export async function createApplication(
       throw new Error("Failed to create application");
     }
 
-    return app;
+    return {
+      ...app,
+      secret: key.appSecret,
+    };
   } catch (error) {
     throw new Error(
       `Failed to create application: ${error instanceof Error ? error.message : "Unknown error"}`,
