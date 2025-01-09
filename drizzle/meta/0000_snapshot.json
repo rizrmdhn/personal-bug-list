@@ -1,5 +1,5 @@
 {
-  "id": "83137033-67eb-4ccf-b416-bff23851b3dd",
+  "id": "a21b9674-be1c-42dc-be92-9db3b578fae2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -75,6 +75,36 @@
           "method": "btree",
           "with": {}
         },
+        "application_name_idx": {
+          "name": "application_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "application_secret_idx": {
+          "name": "application_secret_idx",
+          "columns": [
+            {
+              "expression": "secret",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "application_idx": {
           "name": "application_idx",
           "columns": [
@@ -88,6 +118,21 @@
           "isUnique": false,
           "concurrently": false,
           "method": "btree",
+          "with": {}
+        },
+        "search_name_idx": {
+          "name": "search_name_idx",
+          "columns": [
+            {
+              "expression": "to_tsvector('english', \"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
           "with": {}
         }
       },
@@ -406,53 +451,57 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.personal-bug-list_post": {
-      "name": "personal-bug-list_post",
+    "public.personal-bug-list_sessions": {
+      "name": "personal-bug-list_sessions",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "byDefault",
-            "name": "personal-bug-list_post_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
+          "notNull": true
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(256)",
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
+          "default": "now()"
         }
       },
       "indexes": {
-        "post_name_idx": {
-          "name": "post_name_idx",
+        "session_id_idx": {
+          "name": "session_id_idx",
           "columns": [
             {
-              "expression": "name",
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_id_idx": {
+          "name": "user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -464,17 +513,23 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "post_name_unique": {
-          "name": "post_name_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+      "foreignKeys": {
+        "personal-bug-list_sessions_user_id_personal-bug-list_users_id_fk": {
+          "name": "personal-bug-list_sessions_user_id_personal-bug-list_users_id_fk",
+          "tableFrom": "personal-bug-list_sessions",
+          "tableTo": "personal-bug-list_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -580,7 +635,13 @@
         "SUBMITTED",
         "PROCESSING",
         "ACCEPTED",
-        "REJECTED"
+        "REJECTED",
+        "FIXED",
+        "CLOSED",
+        "REOPENED",
+        "DUPLICATE",
+        "WONTFIX",
+        "INVALID"
       ]
     },
     "public.bug_tag": {
