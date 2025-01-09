@@ -1,0 +1,1 @@
+ALTER TABLE "personal-bug-list_bug_images" DROP COLUMN "file_name";

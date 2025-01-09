@@ -2,20 +2,34 @@ import { bugImages } from "@/server/db/schema";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const createBugImage = createInsertSchema(bugImages, {
-  bugId: () =>
-    z
-      .string()
-      .min(1, {
-        message: "Bug ID is required",
-      })
-      .max(200, {
-        message: "Bug ID is too long",
-      }),
-  file: () => z.string().min(1).max(200),
-  fileName: () => z.string().min(1).max(200),
+export const createBugImageSchema = createInsertSchema(bugImages, {
+  file: () => z.array(z.string()).optional(),
 }).pick({
-  bugId: true,
   file: true,
-  fileName: true,
 });
+
+export type CreateBugImageSchemaType = z.infer<typeof createBugImageSchema>;
+
+export const createBugImageFileSchema = createInsertSchema(bugImages, {
+  file: () =>
+    z
+      .array(
+        z
+          .instanceof(File)
+          .refine(
+            (file) =>
+              ["image/png", "image/jpeg", "image/jpg"].includes(file.type),
+            {
+              message:
+                "Invalid file type supplied. Only PNG, JPEG, and JPG are allowed.",
+            },
+          ),
+      )
+      .min(1),
+}).pick({
+  file: true,
+});
+
+export type CreateBugImageFileSchemaType = z.infer<
+  typeof createBugImageFileSchema
+>;

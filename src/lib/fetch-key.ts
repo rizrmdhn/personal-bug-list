@@ -30,12 +30,14 @@ const validateAppCredentials = async (appKey: string, appSecret: string) => {
   if (!isMatch) {
     throw ApiError.unauthorized("Invalid credentials");
   }
+
+  return appKeyMatch;
 };
 
 export async function fetchKey(req: NextRequest) {
   const authToken = getHeaderValue(req, "Authorization");
   const appKey = getHeaderValue(req, "X-App-Key");
-  await validateAppCredentials(appKey, authToken);
+  const app = await validateAppCredentials(appKey, authToken);
 
-  return { appKey, authToken };
+  return app;
 }

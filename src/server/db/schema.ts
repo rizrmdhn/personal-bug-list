@@ -179,7 +179,6 @@ export const bugImages = createTable(
         onDelete: "cascade",
       }),
     file: varchar("file", { length: 256 }).notNull(),
-    fileName: varchar("file_name", { length: 256 }).notNull(),
     createdAt: timestamp("created_at", {
       withTimezone: true,
       mode: "string",

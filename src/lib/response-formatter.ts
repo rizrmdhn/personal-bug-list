@@ -1,4 +1,5 @@
 import { type Meta } from "@/types/api-response.types";
+import { type ZodIssue } from "zod";
 
 export function formatResponse<T>(meta: Meta, data: T): Response {
   return Response.json(
@@ -16,6 +17,20 @@ export function formatErrorResponse(meta: Meta): Response {
       meta,
     },
     { status: meta.code, statusText: meta.message },
+  );
+}
+
+export function formatZodErrorResponse(errors: ZodIssue[]): Response {
+  return Response.json(
+    {
+      meta: {
+        code: 400,
+        status: "error",
+        message: "Validation error",
+      },
+      errors,
+    },
+    { status: 400, statusText: "Validation error" },
   );
 }
 

@@ -1,13 +1,13 @@
 import "server-only";
 
 import { env } from "@/env";
-import { Client, type ClientOptions } from "minio";
+import { Client, S3Error, type ClientOptions } from "minio";
 
 const config: ClientOptions = {
   accessKey: env.S3_ACCESS_KEY,
   endPoint: env.S3_ENDPOINT,
   secretKey: env.S3_SECRET_KEY,
-  useSSL: false,
+  useSSL: true,
 };
 
 export const s3Client = new Client(config);
@@ -31,26 +31,33 @@ export async function saveFileInBucket({
   file: File;
   folderPath?: string;
 }) {
-  // create bucket if not exist
-  await createBucketIfNotExist(bucketName);
+  try {
+    // create bucket if not exist
+    await createBucketIfNotExist(bucketName);
 
-  // Construct the full path by combining folderPath and fileName
-  const fullPath = folderPath
-    ? `${folderPath.replace(/^\/+|\/+$/g, "")}/${fileName}` // Remove leading/trailing slashes
-    : fileName;
+    // Construct the full path by combining folderPath and fileName
+    const fullPath = folderPath
+      ? `${folderPath.replace(/^\/+|\/+$/g, "")}/${fileName}` // Remove leading/trailing slashes
+      : fileName;
 
-  const fileExist = await checkFileExistsInBucket({
-    bucketName,
-    fileName: fullPath,
-  });
+    const fileExist = await checkFileExistsInBucket({
+      bucketName,
+      fileName: fullPath,
+    });
 
-  if (fileExist) {
-    throw new Error("File already exist");
+    if (fileExist) {
+      throw new Error("File already exist");
+    }
+
+    // convert file to Buffer | internal.Readable
+    const buffer = Buffer.from(await file.arrayBuffer());
+    return await s3Client.putObject(bucketName, fullPath, buffer);
+  } catch (error) {
+    if (error instanceof S3Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("An error occurred while saving file");
   }
-
-  // convert file to Buffer | internal.Readable
-  const buffer = Buffer.from(await file.arrayBuffer());
-  return await s3Client.putObject(bucketName, fullPath, buffer);
 }
 
 export async function getFileFromBucket({
