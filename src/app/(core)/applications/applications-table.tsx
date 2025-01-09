@@ -5,8 +5,10 @@ import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { TraditionalDataTable } from "@/components/traditional-data-table";
 import { useTablePagination } from "@/hooks/use-table-pagination";
 import { useMemo } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function ApplicationsTable() {
+  const [query] = useQueryState("query", parseAsString.withDefault(""));
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
   const [limit] = useQueryState("limit", parseAsInteger.withDefault(10));
   const [sortBy] = useQueryState("sortBy", parseAsString.withDefault("name"));
@@ -15,16 +17,25 @@ export function ApplicationsTable() {
     parse: (value: string) => value as "asc" | "desc",
     serialize: (value: "asc" | "desc") => value,
   });
+  const [simpleSearch] = useQueryState("simpleSearch", {
+    defaultValue: false,
+    parse: (value: string) => value === "true",
+    serialize: (value: boolean) => (value ? "true" : "false"),
+  });
+
+  const debouncedQuery = useDebounce(query, 500);
 
   // Query params object memoization
   const queryParams = useMemo(
     () => ({
+      query: debouncedQuery,
       page,
       pageSize: limit,
       sortBy,
       orderBy: sortOrder,
+      simpleSearch,
     }),
-    [page, limit, sortBy, sortOrder],
+    [debouncedQuery, page, limit, sortBy, sortOrder, simpleSearch],
   );
 
   const { data, isPending } = api.applications.paginate.useQuery(queryParams);

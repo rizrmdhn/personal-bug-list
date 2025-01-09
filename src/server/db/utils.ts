@@ -44,6 +44,9 @@ export interface PaginationOptions {
   readonly sortDirection?: SortDirection;
   readonly orderBy?: string;
   readonly orderDirection?: SortDirection;
+  readonly searchColumns?: PgColumn[];
+  readonly query?: string;
+  readonly simpleSearch?: boolean;
 }
 
 type PaginationDirection = "forward" | "backward";
@@ -67,6 +70,40 @@ interface CursorQueryOptions {
   readonly cursor?: string;
   readonly limit: number;
   readonly direction: PaginationDirection;
+}
+
+function searchQueryBuilder(
+  columns: PgColumn[],
+  query: string,
+  simpleSearch = false,
+): SQL {
+  if (columns.length === 0) {
+    throw new Error("No columns provided for search");
+  }
+
+  if (columns.length === 1 && simpleSearch) {
+    // use like query for simple search
+    return sql`${columns[0]} ILIKE ${`%${query}%`}`;
+  }
+
+  if (columns.length >= 1 && simpleSearch) {
+    // use like query for simple search
+    return sql`(${sql.join(
+      columns.map((column) => sql`${column} ILIKE ${`%${query}%`}`),
+      sql` OR `,
+    )})`;
+  }
+
+  if (columns.length === 1) {
+    return sql`to_tsvector('english', ${columns[0]}) @@ to_tsquery('english', ${query})`;
+  }
+
+  const searchConditions = columns.map((column, index) => {
+    const weight = String.fromCharCode(65 + index); // 'A', 'B', 'C', etc.
+    return sql`setweight(to_tsvector('english', ${column}), ${weight})`;
+  });
+
+  return sql`(${sql.join(searchConditions, sql` || `)}) @@ to_tsquery('english', ${query})`;
 }
 
 function generatePageNumbers(
@@ -121,7 +158,19 @@ function buildPaginatedQuery<T extends PgSelect>(
   orderByColumn: PgColumn | SQL | SQL.Aliased,
   page = 1,
   limit = 10,
+  searchColumns?: PgColumn[],
+  query?: string,
+  simpleSearch = false,
 ): T {
+  if (searchColumns && query) {
+    const searchCondition = searchQueryBuilder(
+      searchColumns,
+      query,
+      simpleSearch,
+    );
+    qb = qb.where(searchCondition);
+  }
+
   return qb
     .orderBy(orderByColumn)
     .limit(limit)
@@ -144,6 +193,9 @@ export async function paginate<
     sortDirection = "asc",
     orderBy,
     orderDirection = "asc",
+    searchColumns = [],
+    query,
+    simpleSearch = false,
   } = options;
 
   const validPage = Math.max(1, page);
@@ -166,6 +218,9 @@ export async function paginate<
     orderByColumn,
     validPage,
     validLimit,
+    searchColumns,
+    query,
+    simpleSearch,
   );
 
   const countQuery = db

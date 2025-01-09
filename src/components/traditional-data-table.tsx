@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   type ColumnDef,
   flexRender,
@@ -30,8 +31,9 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { parseAsInteger, useQueryState } from "nuqs";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import TableRowSkeleton from "./table-row-skeleton";
+import { Checkbox } from "./ui/checkbox";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -57,12 +59,20 @@ export function TraditionalDataTable<TData, TValue>({
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
   // URL State with nuqs
+  const [query, setQuery] = useQueryState(
+    "query",
+    parseAsString.withDefault(""),
+  );
   const [, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
-
   const [, setPageSize] = useQueryState(
     "limit",
     parseAsInteger.withDefault(10),
   );
+  const [simpleSearch, setSimpleSearch] = useQueryState("simpleSearch", {
+    defaultValue: false,
+    parse: (value: string) => value === "true",
+    serialize: (value: boolean) => (value ? "true" : "false"),
+  });
 
   const [sortColumn, setSortColumn] = useQueryState("sortBy");
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
@@ -114,6 +124,15 @@ export function TraditionalDataTable<TData, TValue>({
     [setPageSize, setPage],
   );
 
+  // handle search value
+  const handleQueryChange = React.useCallback(
+    async (query: string) => {
+      await setQuery(query);
+      await setPage(1);
+    },
+    [setQuery, setPage],
+  );
+
   const table = useReactTable({
     data,
     columns,
@@ -130,6 +149,38 @@ export function TraditionalDataTable<TData, TValue>({
 
   return (
     <div className="w-full space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex w-full max-w-sm items-center space-x-2">
+          <Input
+            placeholder="Search..."
+            value={query}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            className="h-8"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 lg:px-3"
+            onClick={() => handleQueryChange("")}
+          >
+            Reset
+          </Button>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="simpleSearch"
+              checked={simpleSearch}
+              onCheckedChange={(checked) => setSimpleSearch(!!checked)}
+            />
+            <label
+              htmlFor="simpleSearch"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Simple search
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -164,7 +215,6 @@ export function TraditionalDataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Render skeleton rows based on current page size
               Array.from({ length: pagination.limit }).map((_, index) => (
                 <TableRowSkeleton key={index} columns={columns.length} />
               ))

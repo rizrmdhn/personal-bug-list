@@ -1,0 +1,1 @@
+CREATE INDEX "search_name_idx" ON "personal-bug-list_applications" USING gin (to_tsvector('english', "name"));

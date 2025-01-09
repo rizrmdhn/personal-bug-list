@@ -15,6 +15,13 @@
       "when": 1736151576638,
       "tag": "0001_material_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1736388864257,
+      "tag": "0002_skinny_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

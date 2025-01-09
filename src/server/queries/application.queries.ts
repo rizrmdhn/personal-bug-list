@@ -60,11 +60,16 @@ export async function getApplicationList(options: PaginationOptions) {
       // Add other sortable columns as needed
     ];
 
+    const opts: PaginationOptions = {
+      ...options,
+      searchColumns: [applications.name],
+    };
+
     return await paginate<typeof baseQuery, SelectApplication>(
       baseQuery,
       applications,
       sortableColumns,
-      options,
+      opts,
     );
   } catch (error) {
     console.error("Application list fetch error:", error);

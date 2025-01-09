@@ -139,6 +139,10 @@ export const applications = createTable(
     index("application_name_idx").using("btree", table.name),
     index("application_secret_idx").using("btree", table.secret),
     index("application_idx").using("btree", table.id),
+    index("search_name_idx").using(
+      "gin",
+      sql`to_tsvector('english', ${table.name})`,
+    ),
   ],
 );
 
