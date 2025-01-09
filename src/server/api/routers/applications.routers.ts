@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
   createApplication,
+  deleteApplication,
   disableApplication,
   enableApplication,
   getApplicationList,
@@ -98,6 +99,14 @@ export const applicationsRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
       const result = await undoRevokeApplication(input.id);
+
+      return result;
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await deleteApplication(input.id);
 
       return result;
     }),

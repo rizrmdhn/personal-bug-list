@@ -1,20 +1,37 @@
 import DataTableActionCell from "@/components/data-table-action-cell";
-import { DataTableColumnHeader } from "@/components/data-table-column-header";
 import { globalErrorToast, globalSuccessToast } from "@/lib/toast";
 import { api } from "@/trpc/react";
 import { type SelectApplication } from "@/types/applications.types";
 import { type ColumnDef, type Row } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Trash, Undo2 } from "lucide-react";
+import { Ban, Check, Trash, Undo2 } from "lucide-react";
 
 const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
   const utils = api.useUtils();
 
-  const revokeMutation = api.applications.revoke.useMutation({
-    onMutate: () => {
-      // add timeout to show loading state
-      return new Promise((resolve) => setTimeout(resolve, 1000));
+  const enableMutation = api.applications.enable.useMutation({
+    onSuccess: () => {
+      globalSuccessToast("Application enabled successfully");
+
+      utils.applications.paginate.invalidate();
     },
+    onError: (error) => {
+      globalErrorToast(error.message);
+    },
+  });
+
+  const disableMutation = api.applications.disable.useMutation({
+    onSuccess: () => {
+      globalSuccessToast("Application disabled successfully");
+
+      utils.applications.paginate.invalidate();
+    },
+    onError: (error) => {
+      globalErrorToast(error.message);
+    },
+  });
+
+  const revokeMutation = api.applications.revoke.useMutation({
     onSuccess: () => {
       globalSuccessToast("Application revoked successfully");
 
@@ -26,10 +43,6 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
   });
 
   const undoRevokeMutation = api.applications.undoRevoke.useMutation({
-    onMutate: () => {
-      // add timeout to show loading state
-      return new Promise((resolve) => setTimeout(resolve, 1000));
-    },
     onSuccess: () => {
       globalSuccessToast("Application revoked successfully");
 
@@ -40,10 +53,49 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
     },
   });
 
+  const deleteMutation = api.applications.delete.useMutation({
+    onSuccess: () => {
+      globalSuccessToast("Application deleted successfully");
+
+      utils.applications.paginate.invalidate();
+    },
+    onError: (error) => {
+      globalErrorToast(error.message);
+    },
+  });
+
+  const isLoading =
+    revokeMutation.isPending ||
+    undoRevokeMutation.isPending ||
+    deleteMutation.isPending ||
+    enableMutation.isPending ||
+    disableMutation.isPending;
+
   return (
     <DataTableActionCell
-      isLoading={revokeMutation.isPending || undoRevokeMutation.isPending}
+      isLoading={isLoading}
       actionMenu={[
+        {
+          icon: row.original.isActive ? <Ban /> : <Check />,
+          text: row.original.isActive ? "Disable" : "Enable",
+          triggerText: row.original.isActive ? "Disable" : "Enable",
+          type: "dialog",
+          dialogConfig: {
+            title: row.original.isActive
+              ? "Disable Application"
+              : "Enable Application",
+            description: row.original.isActive
+              ? "Are you sure you want to disable this application?"
+              : "Are you sure you want to enable this application?",
+            onConfirm: async () => {
+              if (row.original.isActive) {
+                await disableMutation.mutateAsync({ id: row.original.id });
+              } else {
+                await enableMutation.mutateAsync({ id: row.original.id });
+              }
+            },
+          },
+        },
         {
           icon: <Undo2 />,
           text: row.original.isRevoked ? "Undo Revoke" : "Revoke",
@@ -74,7 +126,9 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
           dialogConfig: {
             title: "Delete Application",
             description: "Are you sure you want to delete this application?",
-            onConfirm: () => console.log("Delete"),
+            onConfirm: async () => {
+              await deleteMutation.mutateAsync({ id: row.original.id });
+            },
           },
         },
       ]}
@@ -84,9 +138,6 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
 
 export const columns: ColumnDef<SelectApplication>[] = [
   {
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="No" />
-    ),
     accessorKey: "No",
     accessorFn: (_, rowIndex) => rowIndex + 1,
     id: "No",

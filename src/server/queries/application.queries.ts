@@ -228,3 +228,25 @@ export async function enableApplication(id: string) {
     );
   }
 }
+
+export async function deleteApplication(id: string) {
+  try {
+    const app = await getApplicationById(id);
+
+    if (!app) {
+      throw new Error("Application not found");
+    }
+
+    const result = await db.transaction(async (tx) => {
+      await tx.delete(applications).where(eq(applications.id, id)).execute();
+
+      return true;
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to delete application: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}

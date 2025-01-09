@@ -132,7 +132,10 @@ export default function DataTableActionCell({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCurrentlyLoading}>
+            <AlertDialogCancel
+              onClick={() => setOpenDialogIndex(null)}
+              disabled={isCurrentlyLoading}
+            >
               {menu.dialogConfig.cancelText ?? "Cancel"}
             </AlertDialogCancel>
             <AlertDialogAction
