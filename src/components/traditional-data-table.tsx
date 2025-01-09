@@ -51,10 +51,10 @@ interface DataTableProps<TData, TValue> {
     hasPrevPage: boolean;
   };
   isLoading?: boolean;
-  button: {
+  button?: {
     href: string;
     title: string;
-    className: string;
+    className?: string;
   };
 }
 

@@ -56,6 +56,10 @@ export function ApplicationsTable() {
       data={tableData}
       pagination={paginationProps}
       isLoading={isPending}
+      button={{
+        title: "Create Application",
+        href: "/applications/create",
+      }}
     />
   );
 }

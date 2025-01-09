@@ -60,7 +60,7 @@ export default function LoginForm() {
       <CardHeader>
         <CardTitle className="text-2xl">Login</CardTitle>
         <CardDescription>
-          Enter your email below to login to your account
+          Enter your username below to login to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -125,7 +125,7 @@ export default function LoginForm() {
               {status === "pending" ? (
                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              Login
+              Sign In
             </Button>
           </form>
         </Form>
