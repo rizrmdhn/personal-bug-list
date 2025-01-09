@@ -10,7 +10,6 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
-  integer,
   pgEnum,
   pgTableCreator,
   text,
@@ -36,24 +35,6 @@ export const bugSeverityEnum = pgEnum("bug_severity", AVALIABLE_BUG_SEVERITY);
 export const bugTagEnum = pgEnum("bug_tag", AVALIABLE_BUG_TAG);
 
 export const bugStatusEnum = pgEnum("bug_status", AVALIABLE_BUG_STATUS);
-
-export const posts = createTable(
-  "post",
-  {
-    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-    name: varchar("name", { length: 256 }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-      () => new Date(),
-    ),
-  },
-  (table) => [
-    unique("post_name_unique").on(table.name),
-    index("post_name_idx").using("btree", table.name),
-  ],
-);
 
 export const users = createTable(
   "users",
