@@ -1,4 +1,4 @@
-import { AVALIABLE_BUG_TAG } from "@/lib/constants";
+import { AVALIABLE_BUG_SEVERITY } from "@/lib/constants";
 import { fetchKey } from "@/lib/fetch-key";
 import { formatErrorResponse, formatResponse } from "@/lib/response-formatter";
 import { type NextRequest } from "next/server";
@@ -11,9 +11,9 @@ async function GET(req: NextRequest) {
       {
         code: 200,
         status: "success",
-        message: "List of available tags",
+        message: "List of available severities",
       },
-      AVALIABLE_BUG_TAG,
+      AVALIABLE_BUG_SEVERITY,
     );
   } catch (error) {
     if (error instanceof Response) {
