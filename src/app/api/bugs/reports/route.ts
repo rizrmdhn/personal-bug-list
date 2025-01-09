@@ -1,5 +1,5 @@
 import { fetchKey } from "@/lib/fetch-key";
-import { base64ToFile } from "@/lib/file-converter";
+import { base64ToFile, getFileExtension } from "@/lib/file-converter";
 import {
   formatErrorResponse,
   formatResponse,
@@ -73,7 +73,8 @@ async function handleFormDataRequest(
 
   await Promise.all(
     safeFileList.file.map(async (file) => {
-      const fileName = `${app.id}-${getUnixTime(new Date())}-${file.name}`;
+      const extension = getFileExtension(file.type);
+      const fileName = `${app.id}-${getUnixTime(new Date())}${extension}`;
       await saveFileInBucket({
         bucketName: "bugs",
         fileName,
