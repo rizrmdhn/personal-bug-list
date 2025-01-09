@@ -164,6 +164,17 @@ export const columns: ColumnDef<SelectApplication>[] = [
     ),
   },
   {
+    accessorKey: "isRevoked",
+    header: "Revoked",
+    cell: ({ row }) => (
+      <span
+        className={row.original.isRevoked ? "text-red-600" : "text-green-600"}
+      >
+        {row.original.isRevoked ? "Revoked" : "Not Revoked"}
+      </span>
+    ),
+  },
+  {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => format(new Date(row.original.createdAt), "PP"),
