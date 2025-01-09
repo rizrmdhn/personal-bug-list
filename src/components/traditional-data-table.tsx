@@ -13,8 +13,9 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ArrowUpDown,
+  Plus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,8 @@ import {
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import TableRowSkeleton from "./table-row-skeleton";
 import { Checkbox } from "./ui/checkbox";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -48,6 +51,11 @@ interface DataTableProps<TData, TValue> {
     hasPrevPage: boolean;
   };
   isLoading?: boolean;
+  button: {
+    href: string;
+    title: string;
+    className: string;
+  };
 }
 
 const PAGE_SIZES = [10, 20, 30, 40, 50];
@@ -57,6 +65,7 @@ export function TraditionalDataTable<TData, TValue>({
   data,
   pagination,
   isLoading = false,
+  button,
 }: DataTableProps<TData, TValue>) {
   // URL State with nuqs
   const [query, setQuery] = useQueryState(
@@ -150,34 +159,49 @@ export function TraditionalDataTable<TData, TValue>({
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex w-full max-w-sm items-center space-x-2">
-          <Input
-            placeholder="Search..."
-            value={query}
-            onChange={(e) => handleQueryChange(e.target.value)}
-            className="h-8"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-2 lg:px-3"
-            onClick={() => handleQueryChange("")}
-          >
-            Reset
-          </Button>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="simpleSearch"
-              checked={simpleSearch}
-              onCheckedChange={(checked) => setSimpleSearch(!!checked)}
+        <div className="flex w-full items-center justify-between">
+          <div className="flex max-w-sm items-center space-x-2">
+            <Input
+              placeholder="Search..."
+              value={query}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              className="h-8"
             />
-            <label
-              htmlFor="simpleSearch"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2 lg:px-3"
+              onClick={() => handleQueryChange("")}
             >
-              Simple search
-            </label>
+              Reset
+            </Button>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="simpleSearch"
+                checked={simpleSearch}
+                onCheckedChange={(checked) => setSimpleSearch(!!checked)}
+              />
+              <label
+                htmlFor="simpleSearch"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Simple search
+              </label>
+            </div>
           </div>
+          {button && (
+            <Link
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "h-8",
+                button.className,
+              )}
+              href={button.href}
+            >
+              <Plus className="h-4 w-4" />
+              {button.title}
+            </Link>
+          )}
         </div>
       </div>
 
