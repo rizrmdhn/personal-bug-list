@@ -1,3 +1,4 @@
+import CreateApplicationForm from "@/components/create-application-form";
 import Sheets from "@/components/sheets";
 import { SheetTitle } from "@/components/ui/sheet";
 
@@ -8,6 +9,7 @@ export default function CreateApplications() {
         <SheetTitle className="text-3xl font-bold">
           Add a new applications
         </SheetTitle>
+        <CreateApplicationForm />
       </div>
     </Sheets>
   );

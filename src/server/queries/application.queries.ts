@@ -1,6 +1,6 @@
 import { applications } from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";
-import { db } from "../db";
+import { db, type DBType } from "../db";
 import {
   type CursorPaginationInput,
   type CursorPaginationResult,
@@ -10,6 +10,9 @@ import {
   type SortableColumn,
 } from "../db/utils";
 import { type SelectApplication } from "@/types/applications.types";
+import { type z } from "zod";
+import { type createApplicationSchema } from "@/schema/application.schema";
+import generateApplicationCredentials from "@/lib/generate-credentials";
 
 export async function getApplicationBySecret(secret: string) {
   const app = await db.query.applications.findFirst({
@@ -22,6 +25,17 @@ export async function getApplicationBySecret(secret: string) {
 export async function getApplicationByKeyAndName(key: string, name: string) {
   const app = await db.query.applications.findFirst({
     where: and(eq(applications.key, key), eq(applications.name, name)),
+  });
+
+  return app;
+}
+
+export async function getApplicationByKeyAndSecret(
+  key: string,
+  secret: string,
+) {
+  const app = await db.query.applications.findFirst({
+    where: and(eq(applications.key, key), eq(applications.secret, secret)),
   });
 
   return app;
@@ -75,6 +89,35 @@ export async function getApplicationList(options: PaginationOptions) {
     console.error("Application list fetch error:", error);
     throw new Error(
       `Failed to fetch application list: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+export async function createApplication(
+  db: DBType,
+  input: z.infer<typeof createApplicationSchema>,
+) {
+  try {
+    const key = generateApplicationCredentials();
+
+    const [app] = await db
+      .insert(applications)
+      .values({
+        name: input.name,
+        key: key.appKey,
+        secret: key.appSecret,
+      })
+      .returning()
+      .execute();
+
+    if (!app) {
+      throw new Error("Failed to create application");
+    }
+
+    return app;
+  } catch (error) {
+    throw new Error(
+      `Failed to create application: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }

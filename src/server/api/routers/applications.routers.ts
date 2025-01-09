@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
+  createApplication,
   getApplicationList,
   getCursorBasedApplicationList,
 } from "@/server/queries/application.queries";
+import { createApplicationSchema } from "@/schema/application.schema";
 
 export const applicationsRouter = createTRPCRouter({
   cursor: protectedProcedure
@@ -23,6 +25,7 @@ export const applicationsRouter = createTRPCRouter({
 
       return result;
     }),
+
   paginate: protectedProcedure
     .input(
       z.object({
@@ -52,4 +55,14 @@ export const applicationsRouter = createTRPCRouter({
         return result;
       },
     ),
+
+  create: protectedProcedure
+    .input(createApplicationSchema)
+    .mutation(async ({ input, ctx }) => {
+      const result = await ctx.db.transaction(async (trx) => {
+        return await createApplication(trx, input);
+      });
+
+      return result;
+    }),
 });
