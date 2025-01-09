@@ -4,22 +4,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { getCurrentSession } from "@/lib/sessions";
 import { type NavMainItem } from "@/types/side-bar.types";
 import { HomeIcon, ListTodo } from "lucide-react";
-import { redirect } from "next/navigation";
 
 interface CoreLayoutProps {
   children: React.ReactNode;
 }
 
 export default async function CoreLayout({ children }: CoreLayoutProps) {
-  const { user } = await getCurrentSession();
-
-  if (!user) {
-    redirect("/sign-in");
-  }
-
   const menuItems: NavMainItem[] = [
     {
       title: "Dashboard",

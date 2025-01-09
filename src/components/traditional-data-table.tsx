@@ -12,7 +12,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Loader2,
   ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +31,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { parseAsInteger, useQueryState } from "nuqs";
+import TableRowSkeleton from "./table-row-skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -164,14 +164,10 @@ export function TraditionalDataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                </TableCell>
-              </TableRow>
+              // Render skeleton rows based on current page size
+              Array.from({ length: pagination.limit }).map((_, index) => (
+                <TableRowSkeleton key={index} columns={columns.length} />
+              ))
             ) : data.length === 0 ? (
               <TableRow>
                 <TableCell

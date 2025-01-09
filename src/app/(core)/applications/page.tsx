@@ -1,10 +1,13 @@
 import React from "react";
 import { ApplicationsTable } from "./applications-table";
+import { HydrateClient } from "@/trpc/server";
 
-export default function Page() {
+export default async function Page() {
   return (
-    <div>
-      <ApplicationsTable />
-    </div>
+    <HydrateClient>
+      <div>
+        <ApplicationsTable />
+      </div>
+    </HydrateClient>
   );
 }
