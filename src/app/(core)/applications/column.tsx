@@ -4,7 +4,7 @@ import { api } from "@/trpc/react";
 import { type SelectApplication } from "@/types/applications.types";
 import { type ColumnDef, type Row } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Ban, Check, Trash, Undo2 } from "lucide-react";
+import { Ban, Check, ShieldCheck, ShieldX, Trash } from "lucide-react";
 
 const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
   const utils = api.useUtils();
@@ -44,7 +44,7 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
 
   const undoRevokeMutation = api.applications.undoRevoke.useMutation({
     onSuccess: () => {
-      globalSuccessToast("Application revoked successfully");
+      globalSuccessToast("Application revoke undone successfully");
 
       utils.applications.paginate.invalidate();
     },
@@ -97,7 +97,7 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
           },
         },
         {
-          icon: <Undo2 />,
+          icon: row.original.isRevoked ? <ShieldCheck /> : <ShieldX />,
           text: row.original.isRevoked ? "Undo Revoke" : "Revoke",
           triggerText: row.original.isRevoked ? "Undo Revoke" : "Revoke",
           type: "dialog",
