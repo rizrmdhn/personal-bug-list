@@ -5,9 +5,7 @@ import { HydrateClient } from "@/trpc/server";
 export default async function Page() {
   return (
     <HydrateClient>
-      <div>
-        <ApplicationsTable />
-      </div>
+      <ApplicationsTable />
     </HydrateClient>
   );
 }

@@ -11,9 +11,13 @@ export const metadata = generateMetadata({
   title: "Bug Tracker",
 });
 
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<RootLayoutProps>): JSX.Element {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>

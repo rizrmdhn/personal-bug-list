@@ -6,6 +6,16 @@ export const metadata = generateMetadata({
   description: "List all of the applications connected to your bug tracker",
 });
 
-export default function layout({ children }: { children: React.ReactNode }) {
-  return children;
+interface ApplicationsLayoutProps {
+  children: React.ReactNode;
+  sheet: React.ReactNode;
+}
+
+export default function layout({ children, sheet }: ApplicationsLayoutProps) {
+  return (
+    <>
+      {children}
+      {sheet}
+    </>
+  );
 }

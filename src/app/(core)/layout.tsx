@@ -4,14 +4,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { api, HydrateClient } from "@/trpc/server";
 import { type NavMainItem } from "@/types/side-bar.types";
 import { HomeIcon, ListTodo } from "lucide-react";
 
 interface CoreLayoutProps {
   children: React.ReactNode;
+  sheet: React.ReactNode;
 }
 
-export default async function CoreLayout({ children }: CoreLayoutProps) {
+export default async function CoreLayout({ children, sheet }: CoreLayoutProps) {
   const menuItems: NavMainItem[] = [
     {
       title: "Dashboard",
@@ -27,16 +29,24 @@ export default async function CoreLayout({ children }: CoreLayoutProps) {
     },
   ];
 
+  api.auth.details.prefetch();
+
   return (
     <SidebarProvider>
-      <AppSidebar data={menuItems} />
+      <HydrateClient>
+        <AppSidebar data={menuItems} />
+      </HydrateClient>
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          {children}
+          {sheet}
+          <div id="sheet-root" />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
