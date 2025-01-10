@@ -32,7 +32,12 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { parseAsString, useQueryState } from "nuqs";
+import {
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  useQueryState,
+} from "nuqs";
 import TableRowSkeleton from "./table-row-skeleton";
 import { Checkbox } from "./ui/checkbox";
 import Link from "next/link";
@@ -72,35 +77,20 @@ export function TraditionalDataTable<TData, TValue>({
     "query",
     parseAsString.withDefault(""),
   );
-  const [, setPage] = useQueryState("page", {
-    defaultValue: 1,
-    parse: (value) => Number(value),
-    serialize: (value) => String(value),
-    clearOnDefault: false,
-  });
-  const [, setPageSize] = useQueryState("limit", {
-    defaultValue: 10,
-    parse: (value) => Number(value),
-    serialize: (value) => String(value),
-    clearOnDefault: false,
-  });
-  const [simpleSearch, setSimpleSearch] = useQueryState("simpleSearch", {
-    defaultValue: false,
-    parse: (value: string) => value === "true",
-    serialize: (value: boolean) => (value ? "true" : "false"),
-    clearOnDefault: false,
-  });
-  const [sortColumn, setSortColumn] = useQueryState("sortBy", {
-    defaultValue: "name",
-    parse: (value) => value as string,
-    serialize: (value) => value,
-    clearOnDefault: false,
-  });
+  const [, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [, setPageSize] = useQueryState(
+    "limit",
+    parseAsInteger.withDefault(10),
+  );
+  const [simpleSearch, setSimpleSearch] = useQueryState(
+    "simpleSearch",
+    parseAsBoolean.withDefault(false),
+  );
+  const [sortColumn, setSortColumn] = useQueryState("sortBy");
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
     defaultValue: "asc",
     parse: (value: string) => value as "asc" | "desc",
     serialize: (value: "asc" | "desc") => value,
-    clearOnDefault: false,
   });
 
   // Convert URL sort state to tanstack table sorting state
