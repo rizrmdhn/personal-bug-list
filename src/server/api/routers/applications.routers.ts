@@ -50,8 +50,6 @@ export const applicationsRouter = createTRPCRouter({
           limit: pageSize,
           page,
           sortBy,
-          orderBy,
-          orderDirection: orderBy,
           sortDirection: orderBy,
           query: query,
           simpleSearch,

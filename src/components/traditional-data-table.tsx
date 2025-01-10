@@ -32,7 +32,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
+import { parseAsString, useQueryState } from "nuqs";
 import TableRowSkeleton from "./table-row-skeleton";
 import { Checkbox } from "./ui/checkbox";
 import Link from "next/link";
@@ -72,22 +72,35 @@ export function TraditionalDataTable<TData, TValue>({
     "query",
     parseAsString.withDefault(""),
   );
-  const [, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
-  const [, setPageSize] = useQueryState(
-    "limit",
-    parseAsInteger.withDefault(10),
-  );
+  const [, setPage] = useQueryState("page", {
+    defaultValue: 1,
+    parse: (value) => Number(value),
+    serialize: (value) => String(value),
+    clearOnDefault: false,
+  });
+  const [, setPageSize] = useQueryState("limit", {
+    defaultValue: 10,
+    parse: (value) => Number(value),
+    serialize: (value) => String(value),
+    clearOnDefault: false,
+  });
   const [simpleSearch, setSimpleSearch] = useQueryState("simpleSearch", {
     defaultValue: false,
     parse: (value: string) => value === "true",
     serialize: (value: boolean) => (value ? "true" : "false"),
+    clearOnDefault: false,
   });
-
-  const [sortColumn, setSortColumn] = useQueryState("sortBy");
+  const [sortColumn, setSortColumn] = useQueryState("sortBy", {
+    defaultValue: "name",
+    parse: (value) => value as string,
+    serialize: (value) => value,
+    clearOnDefault: false,
+  });
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
     defaultValue: "asc",
     parse: (value: string) => value as "asc" | "desc",
     serialize: (value: "asc" | "desc") => value,
+    clearOnDefault: false,
   });
 
   // Convert URL sort state to tanstack table sorting state
@@ -108,7 +121,8 @@ export function TraditionalDataTable<TData, TValue>({
           await setSortColumn(newSorting[0].id);
           await setSortOrder(newSorting[0].desc ? "desc" : "asc");
         } else {
-          await setSortColumn(null);
+          // Keep the last selected column but reset the order
+          await setSortColumn(sorting[0]?.id ?? "name");
           await setSortOrder("asc");
         }
       })();

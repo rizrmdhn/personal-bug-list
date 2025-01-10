@@ -42,8 +42,6 @@ export interface PaginationOptions {
   readonly limit?: number;
   readonly sortBy?: string;
   readonly sortDirection?: SortDirection;
-  readonly orderBy?: string;
-  readonly orderDirection?: SortDirection;
   readonly searchColumns?: PgColumn[];
   readonly query?: string;
   readonly simpleSearch?: boolean;
@@ -191,8 +189,6 @@ export async function paginate<
     limit = 10,
     sortBy,
     sortDirection = "asc",
-    orderBy,
-    orderDirection = "asc",
     searchColumns = [],
     query,
     simpleSearch = false,
@@ -202,15 +198,13 @@ export async function paginate<
   const validLimit = Math.max(1, limit);
 
   // Find the sortable column that matches either sortBy or orderBy parameter
-  const sortColumn = sortableColumns.find(
-    (col) => col.name === (orderBy ?? sortBy),
-  );
+  const sortColumn = sortableColumns.find((col) => col.name === sortBy);
 
   // Use the matched column or default to the first sortable column, or fallback to a default SQL order
   const orderByColumn = sortColumn
-    ? getSortOrder(sortColumn.column, orderDirection || sortDirection)
+    ? getSortOrder(sortColumn.column, sortDirection)
     : sortableColumns[0]
-      ? getSortOrder(sortableColumns[0].column, orderDirection || sortDirection)
+      ? getSortOrder(sortableColumns[0].column, sortDirection)
       : sql`1`;
 
   const paginatedQuery = buildPaginatedQuery(
@@ -246,8 +240,6 @@ export async function paginate<
     pages: generatePageNumbers(validPage, totalPages),
     sortBy: sortColumn?.name,
     sortDirection,
-    orderBy: sortColumn?.name,
-    orderDirection,
   });
 }
 
