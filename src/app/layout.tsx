@@ -6,6 +6,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { Toaster } from "@/components/ui/sonner";
 import generateMetadata from "@/lib/generate-metadata";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { env } from "@/env";
 
 export const metadata = generateMetadata({
   title: "Bug Tracker",
@@ -20,6 +21,14 @@ export default function RootLayout({
 }: Readonly<RootLayoutProps>): JSX.Element {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
+      <head>
+        {env.ENABLE_REACT_SCAN && (
+          <script
+            src="https://unpkg.com/react-scan/dist/auto.global.js"
+            async
+          />
+        )}
+      </head>
       <body>
         <TRPCReactProvider>
           <ThemeProvider
