@@ -116,7 +116,7 @@ async function POST(req: NextRequest) {
 
     const safeData = createBugSchema.parse(data);
 
-    await db.transaction(async (dbClient) => {
+    const result = await db.transaction(async (dbClient) => {
       const bug = await createBugs(dbClient, app.id, {
         description: safeData.description,
         severity: safeData.severity,
@@ -136,6 +136,8 @@ async function POST(req: NextRequest) {
           savedFileNames,
         );
       }
+
+      return bug;
     });
 
     return formatResponse(
@@ -144,7 +146,7 @@ async function POST(req: NextRequest) {
         status: "success",
         message: "Bug report created successfully",
       },
-      app,
+      result,
     );
   } catch (error) {
     console.log(error);
