@@ -4,7 +4,14 @@ import { api } from "@/trpc/react";
 import { type SelectApplication } from "@/types/applications.types";
 import { type ColumnDef, type Row } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Ban, Check, ShieldCheck, ShieldX, Trash } from "lucide-react";
+import {
+  Ban,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+  ShieldX,
+  Trash,
+} from "lucide-react";
 
 const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
   const utils = api.useUtils();
@@ -75,6 +82,13 @@ const ActionCell = ({ row }: { row: Row<SelectApplication> }) => {
     <DataTableActionCell
       isLoading={isLoading}
       actionMenu={[
+        {
+          icon: <ExternalLink />,
+          text: "Details",
+          triggerText: "Details",
+          type: "link",
+          href: `/applications/${row.original.id}`,
+        },
         {
           icon: row.original.isActive ? <Ban /> : <Check />,
           text: row.original.isActive ? "Disable" : "Enable",
