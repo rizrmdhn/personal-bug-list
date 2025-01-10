@@ -7,6 +7,7 @@ import {
   enableApplication,
   getApplicationList,
   getCursorBasedApplicationList,
+  getDetailApplication,
   revokeApplication,
   undoRevokeApplication,
 } from "@/server/queries/application.queries";
@@ -58,6 +59,14 @@ export const applicationsRouter = createTRPCRouter({
         return result;
       },
     ),
+
+  details: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const result = await getDetailApplication(input.id);
+
+      return result;
+    }),
 
   create: protectedProcedure
     .input(createApplicationSchema)
