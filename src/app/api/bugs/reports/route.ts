@@ -17,7 +17,7 @@ import {
 import { db, type DBType } from "@/server/db";
 import { createBugImages } from "@/server/queries/bug-images.queries";
 import { createBugs } from "@/server/queries/bugs.queries";
-import { saveFileInBucket } from "@/server/storage";
+import { deleteFindedFileFromBucket, saveFileInBucket } from "@/server/storage";
 import { type SelectApplication } from "@/types/applications.types";
 import { getUnixTime } from "date-fns";
 import { S3Error } from "minio";
@@ -28,6 +28,7 @@ async function handleJsonRequest(
   data: CreateBugSchemaType,
   app: SelectApplication,
   db: DBType,
+  savedFileNames: string[],
 ) {
   const safeBase64Image = createBugImageSchema.parse(data);
   if (!safeBase64Image.file) {
@@ -52,6 +53,8 @@ async function handleJsonRequest(
       });
 
       await createBugImages(db, app.id, fileName);
+
+      savedFileNames.push(fileName);
     }),
   );
 }
@@ -61,6 +64,7 @@ async function handleFormDataRequest(
   app: SelectApplication,
   dbClient: DBType,
   bugId: string,
+  savedFileNames: string[],
 ) {
   const safeFileList = createBugImageFileSchema.parse(data);
   if (!safeFileList.file) {
@@ -82,11 +86,14 @@ async function handleFormDataRequest(
         folderPath: "images",
       });
       await createBugImages(dbClient, bugId, fileName);
+
+      savedFileNames.push(fileName);
     }),
   );
 }
 
 async function POST(req: NextRequest) {
+  const savedFileNames: string[] = [];
   try {
     const app = await fetchKey(req);
     const contentType = req.headers.get("content-type");
@@ -119,9 +126,15 @@ async function POST(req: NextRequest) {
       });
 
       if (contentType?.includes("application/json")) {
-        await handleJsonRequest(safeData, app, dbClient);
+        await handleJsonRequest(safeData, app, dbClient, savedFileNames);
       } else if (contentType?.includes("multipart/form-data")) {
-        await handleFormDataRequest(data, app, dbClient, bug.id);
+        await handleFormDataRequest(
+          data,
+          app,
+          dbClient,
+          bug.id,
+          savedFileNames,
+        );
       }
     });
 
@@ -144,6 +157,18 @@ async function POST(req: NextRequest) {
         message: error.message,
       });
     }
+
+    // delete files from bucket
+    await Promise.all(
+      savedFileNames.map(async (fileName) => {
+        await deleteFindedFileFromBucket({
+          bucketName: "bugs",
+          fileName,
+          folderPath: "images",
+        });
+      }),
+    );
+
     return formatErrorResponse({
       code: 500,
       status: "error",
