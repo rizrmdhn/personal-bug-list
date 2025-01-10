@@ -105,6 +105,35 @@ export async function deleteFileFromBucket({
   await s3Client.removeObject(bucketName, fullPath);
 }
 
+export async function deleteFindedFileFromBucket({
+  bucketName,
+  fileName,
+  folderPath = "",
+}: {
+  bucketName: string;
+  fileName: string;
+  folderPath?: string;
+}) {
+  // check if file exist
+  const fileExist = await checkFileExistsInBucket({
+    bucketName,
+    fileName,
+    folderPath,
+  });
+
+  // it should continue if file does not exist
+  if (!fileExist) {
+    return;
+  }
+
+  // Construct the full path by combining folderPath and fileName
+  const fullPath = folderPath
+    ? `${folderPath.replace(/^\/+|\/+$/g, "")}/${fileName}` // Remove leading/trailing slashes
+    : fileName;
+
+  await s3Client.removeObject(bucketName, fullPath);
+}
+
 export async function checkFileExistsInBucket({
   bucketName,
   fileName,
