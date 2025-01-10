@@ -1,9 +1,21 @@
 import "server-only";
 
 import { type createBugSchema } from "@/schema/bugs.schema";
-import { type DBType } from "../db";
+import { db, type DBType } from "../db";
 import { type z } from "zod";
 import { bugs } from "../db/schema";
+import { eq } from "drizzle-orm";
+
+export async function getDetailBug(bugId: string) {
+  const details = await db.query.bugs.findFirst({
+    where: eq(bugs.id, bugId),
+    with: {
+      images: true,
+    },
+  });
+
+  return details;
+}
 
 export async function createBugs(
   db: DBType,

@@ -13,10 +13,16 @@ export const applicationRelations = relations(applications, ({ many }) => ({
 }));
 
 export const bugRelations = relations(bugs, ({ one, many }) => ({
-  application: one(applications),
+  application: one(applications, {
+    fields: [bugs.appId],
+    references: [applications.id],
+  }),
   images: many(bugImages),
 }));
 
 export const bugImageRelations = relations(bugImages, ({ one }) => ({
-  bug: one(bugs),
+  bug: one(bugs, {
+    fields: [bugImages.bugId],
+    references: [bugs.id],
+  }),
 }));
