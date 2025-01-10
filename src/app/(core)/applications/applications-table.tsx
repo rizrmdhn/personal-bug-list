@@ -1,7 +1,12 @@
 "use client";
 import { api } from "@/trpc/react";
 import { columns } from "./column";
-import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
+import {
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  useQueryState,
+} from "nuqs";
 import { TraditionalDataTable } from "@/components/traditional-data-table";
 import { useTablePagination } from "@/hooks/use-table-pagination";
 import { useMemo } from "react";
@@ -17,11 +22,10 @@ export function ApplicationsTable() {
     parse: (value: string) => value as "asc" | "desc",
     serialize: (value: "asc" | "desc") => value,
   });
-  const [simpleSearch] = useQueryState("simpleSearch", {
-    defaultValue: false,
-    parse: (value: string) => value === "true",
-    serialize: (value: boolean) => (value ? "true" : "false"),
-  });
+  const [simpleSearch] = useQueryState(
+    "simpleSearch",
+    parseAsBoolean.withDefault(false),
+  );
 
   const debouncedQuery = useDebounce(query, 500);
 
