@@ -32,16 +32,11 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  useQueryState,
-} from "nuqs";
 import TableRowSkeleton from "./table-row-skeleton";
 import { Checkbox } from "./ui/checkbox";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import usePaginateParams from "@/hooks/use-paginate-params";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -72,25 +67,23 @@ export function TraditionalDataTable<TData, TValue>({
   isLoading = false,
   button,
 }: DataTableProps<TData, TValue>) {
-  // URL State with nuqs
-  const [query, setQuery] = useQueryState(
-    "query",
-    parseAsString.withDefault(""),
-  );
-  const [, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
-  const [, setPageSize] = useQueryState(
-    "limit",
-    parseAsInteger.withDefault(10),
-  );
-  const [simpleSearch, setSimpleSearch] = useQueryState(
-    "simpleSearch",
-    parseAsBoolean.withDefault(false),
-  );
-  const [sortColumn, setSortColumn] = useQueryState("sortBy");
-  const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
-    defaultValue: "asc",
-    parse: (value: string) => value as "asc" | "desc",
-    serialize: (value: "asc" | "desc") => value,
+  const {
+    query,
+    setQuery,
+    setPageSize,
+    setSimpleSearch,
+    sortBy: sortColumn,
+    setSortBy: setSortColumn,
+    sortOrder,
+    setSortOrder,
+    simpleSearch,
+    setPage,
+  } = usePaginateParams({
+    q: "",
+    pageNumber: 1,
+    pageLimit: 10,
+    columnSortBy: "name",
+    columnSortOrder: "asc",
   });
 
   // Convert URL sort state to tanstack table sorting state
