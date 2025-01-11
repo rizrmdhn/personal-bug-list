@@ -88,7 +88,11 @@ export const BugsList: React.FC<BugsListProps> = ({
                     >
                       {bug.severity}
                     </Badge>
-                    <Badge variant="outline">{bug.tags}</Badge>
+                    {bug.tags.map((tag, idx) => (
+                      <Badge key={idx} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
                     <Badge variant="secondary">{bug.status}</Badge>
                   </div>
                 </div>
