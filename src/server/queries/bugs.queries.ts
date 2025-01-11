@@ -5,17 +5,13 @@ import { db, type DBType } from "../db";
 import { type z } from "zod";
 import { bugImages, bugs } from "../db/schema";
 import { eq, sql } from "drizzle-orm";
-import {
-  paginateWithEnhanceData,
-  type PaginationWithEnhanceDataOptions,
-  type SortableColumn,
-} from "../db/utils";
+import { paginateWithEnhanceData, type SortableColumn } from "../db/utils";
 import {
   type BugImageWithUrl,
   type ImageModel,
 } from "@/types/bug-images.types";
 import { generatePresignedUrl } from "../storage";
-import { GetBugsOptions } from "@/types/bugs.types";
+import { type GetBugsOptions } from "@/types/bugs.types";
 
 export async function getDetailBug(bugId: string) {
   const details = await db.query.bugs.findFirst({
@@ -106,6 +102,8 @@ export async function getBugs(appId: string, options: GetBugsOptions) {
       ...options,
       searchColumns: [bugs.status],
       enhanceDataFn: enhanceDataWithUrls,
+      sortBy: options.sortBy ?? "createdAt",
+      sortDirection: options.sortDirection ?? "desc",
     };
 
     return await paginateWithEnhanceData<

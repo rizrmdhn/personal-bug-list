@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { getBugs } from "@/server/queries/bugs.queries";
 import { paginateBugsSchema } from "@/schema/bugs.schema";

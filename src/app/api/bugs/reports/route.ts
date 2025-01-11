@@ -27,6 +27,7 @@ import { ZodError } from "zod";
 async function handleJsonRequest(
   data: CreateBugSchemaType,
   app: SelectApplication,
+  bugId: string,
   db: DBType,
   savedFileNames: string[],
 ) {
@@ -52,7 +53,11 @@ async function handleJsonRequest(
         folderPath: "images",
       });
 
-      await createBugImages(db, app.id, fileName);
+      await createBugImages(
+        db,
+        bugId,
+        `${fileName}${getFileExtension(file.type)}`,
+      );
 
       savedFileNames.push(fileName);
     }),
@@ -133,7 +138,7 @@ async function POST(req: NextRequest) {
       });
 
       if (contentType?.includes("application/json")) {
-        await handleJsonRequest(safeData, app, dbClient, savedFileNames);
+        await handleJsonRequest(data, app, bug.id, dbClient, savedFileNames);
       } else if (contentType?.includes("multipart/form-data")) {
         await handleFormDataRequest(
           data,

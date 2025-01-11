@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AVALIABLE_BUG_STATUS } from "@/lib/constants";
-import { PaginateBugsSchemaType } from "@/schema/bugs.schema";
+import { type PaginateBugsSchemaType } from "@/schema/bugs.schema";
 
 // components/BugsSection.tsx
 interface BugsSectionProps {}
