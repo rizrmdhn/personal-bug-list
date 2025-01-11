@@ -60,8 +60,6 @@ export const BugsList: React.FC<BugsListProps> = ({
     );
   }
 
-  console.log("data", data);
-
   return (
     <div className="space-y-6">
       <div className="grid gap-6">

@@ -38,7 +38,7 @@ const BugsSection: React.FC<BugsSectionProps> = () => {
   const { data, isPending, isError, error } =
     api.bugs.paginate.useQuery(queryParams);
 
-  const handleStatusChange = React.useCallback((value: string) => {
+  const handleStatusChange = React.useCallback((value: string | undefined) => {
     setStatus(value);
   }, []);
 
@@ -66,6 +66,14 @@ const BugsSection: React.FC<BugsSectionProps> = () => {
               </SelectGroup>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            onClick={() => {
+              handleStatusChange(undefined);
+            }}
+          >
+            Reset
+          </Button>
         </div>
       </div>
 

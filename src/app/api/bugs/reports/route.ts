@@ -105,7 +105,14 @@ async function POST(req: NextRequest) {
       if (contentType?.includes("multipart/form-data")) {
         const formData = await req.formData();
         const files = formData.getAll("file");
-        return { ...Object.fromEntries(formData), file: files };
+        const tagsString = formData.get("tags") as string;
+        const tags = JSON.parse(tagsString); // Parse the JSON string back to array
+
+        return {
+          ...Object.fromEntries(formData),
+          tags, // Use the parsed tags array
+          file: files,
+        };
       }
       throw formatErrorResponse({
         code: 400,

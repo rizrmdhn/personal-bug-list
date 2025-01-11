@@ -13,6 +13,7 @@ const getHeaderValue = (req: NextRequest, header: string) => {
 
 const validateAppCredentials = async (appKey: string, appSecret: string) => {
   const appKeyMatch = await getApplicationByKey(appKey);
+
   if (!appKeyMatch) {
     throw ApiError.unauthorized("Invalid credentials");
   }
@@ -25,7 +26,10 @@ const validateAppCredentials = async (appKey: string, appSecret: string) => {
     throw ApiError.forbidden("Application is revoked");
   }
 
-  const isMatch = await verify(appKeyMatch.secret, appSecret);
+  // remove bearer from the appSecret
+  const cleanAppSecret = appSecret.replace("Bearer ", "");
+
+  const isMatch = await verify(appKeyMatch.secret, cleanAppSecret);
 
   if (!isMatch) {
     throw ApiError.unauthorized("Invalid credentials");
