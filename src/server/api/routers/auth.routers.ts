@@ -3,8 +3,14 @@ import { getUserByUsername } from "@/server/queries/users.queries";
 import { z } from "zod";
 import { verify } from "@node-rs/argon2";
 import { TRPCError } from "@trpc/server";
-import { createTokenCookie, encrypt } from "@/lib/jwt-auth";
-import { cookies } from "next/headers";
+import {
+  createSession,
+  invalidateSession,
+} from "@/server/queries/sessions.queries";
+import {
+  deleteSessionTokenCookie,
+  setSessionTokenCookie,
+} from "@/lib/sessions";
 
 export const authRouter = createTRPCRouter({
   login: publicProcedure
@@ -31,29 +37,18 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Generate JWT
-      const token = await encrypt({
-        id: user.id,
-        username: user.username,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      });
+      // create session
+      const session = await createSession(user.id);
 
-      // Create session
-      await createTokenCookie(token);
+      setSessionTokenCookie(session.id, new Date(session.expiresAt));
 
       return true;
     }),
 
   logout: protectedProcedure.mutation(async ({ ctx: { session } }) => {
-    if (!session) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Invalid User Credentials",
-      });
-    }
+    await invalidateSession(session.id);
 
-    (await cookies()).delete("token");
+    deleteSessionTokenCookie();
 
     return true;
   }),

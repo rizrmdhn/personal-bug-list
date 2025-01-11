@@ -19,8 +19,13 @@ import { Clock, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DetailApplicationPage() {
-  const { id } = useParams<{ id: string }>();
-  const [details] = api.applications.details.useSuspenseQuery({ id });
+  const params = useParams<{ appId: string }>();
+  const [details] = api.applications.details.useSuspenseQuery({
+    id: params.appId,
+  });
+  const { data, isPending } = api.bugs.paginate.useQuery({
+    applicationId: params.appId,
+  });
 
   return (
     <div className="mx-auto max-w-4xl">
