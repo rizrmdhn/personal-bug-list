@@ -11,7 +11,7 @@ export const createBugSchema = createInsertSchema(bugs, {
   title: () => z.string().min(1).max(200),
   description: () => z.string().min(1).max(2555),
   severity: () => z.enum(AVALIABLE_BUG_SEVERITY),
-  tags: () => z.enum(AVALIABLE_BUG_TAG),
+  tags: () => z.array(z.enum(AVALIABLE_BUG_TAG)),
   status: () => z.enum(AVALIABLE_BUG_STATUS).default("SUBMITTED"),
 }).pick({
   title: true,
