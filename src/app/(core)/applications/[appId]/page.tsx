@@ -37,7 +37,13 @@ export default function DetailApplicationPage() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              {details.isActive && <Badge>Active</Badge>}
+              {details.isActive ? (
+                <Badge className="bg-green-500 text-white hover:bg-green-500">
+                  Active
+                </Badge>
+              ) : (
+                <Badge variant="destructive">Inactive</Badge>
+              )}
               {details.isRevoked && (
                 <Badge variant="destructive">Revoked</Badge>
               )}
