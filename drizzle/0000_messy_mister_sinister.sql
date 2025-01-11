@@ -17,7 +17,6 @@ CREATE TABLE "personal-bug-list_bug_images" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"bug_id" uuid NOT NULL,
 	"file" varchar(256) NOT NULL,
-	"file_name" varchar(256) NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone
 );
@@ -28,7 +27,7 @@ CREATE TABLE "personal-bug-list_bugs" (
 	"title" varchar(256) NOT NULL,
 	"description" text NOT NULL,
 	"severity" "bug_severity" NOT NULL,
-	"tags" "bug_tag" NOT NULL,
+	"tags" "bug_tag"[] NOT NULL,
 	"status" "bug_status" DEFAULT 'SUBMITTED' NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone

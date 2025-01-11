@@ -142,7 +142,7 @@ export const bugs = createTable(
     title: varchar("title", { length: 256 }).notNull(),
     description: text("description").notNull(),
     severity: bugSeverityEnum("severity").notNull(),
-    tags: bugTagEnum("tags").notNull(),
+    tags: bugTagEnum("tags").array().notNull(),
     status: bugStatusEnum("status").notNull().default("SUBMITTED"),
     createdAt: timestamp("created_at", {
       withTimezone: true,
