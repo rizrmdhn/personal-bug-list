@@ -36,3 +36,16 @@ export const updateBugSchema = createUpdateSchema(bugs, {
   tags: true,
   status: true,
 });
+
+export const paginateBugsSchema = z.object({
+  applicationId: z.string().min(1).max(50),
+  page: z.number().min(1).default(1),
+  pageSize: z.number().min(1).max(50).default(10),
+  sortBy: z.string().optional(),
+  orderBy: z.enum(["asc", "desc"]).optional(),
+  query: z.string().optional(),
+  simpleSearch: z.boolean().optional().default(false),
+  enhanceDataFn: z.function().optional(),
+});
+
+export type PaginateBugsSchemaType = z.infer<typeof paginateBugsSchema>;

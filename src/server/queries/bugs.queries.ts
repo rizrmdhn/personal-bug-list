@@ -15,6 +15,7 @@ import {
   type ImageModel,
 } from "@/types/bug-images.types";
 import { generatePresignedUrl } from "../storage";
+import { GetBugsOptions } from "@/types/bugs.types";
 
 export async function getDetailBug(bugId: string) {
   const details = await db.query.bugs.findFirst({
@@ -27,13 +28,7 @@ export async function getDetailBug(bugId: string) {
   return details;
 }
 
-export async function getBugs(
-  appId: string,
-  options: PaginationWithEnhanceDataOptions<
-    typeof bugs.$inferSelect & { images: ImageModel[] },
-    typeof bugs.$inferSelect & { images: BugImageWithUrl[] }
-  >,
-) {
+export async function getBugs(appId: string, options: GetBugsOptions) {
   try {
     const enhanceDataWithUrls = async (
       items: (typeof bugs.$inferSelect & { images: ImageModel[] })[],
@@ -104,14 +99,12 @@ export async function getBugs(
       { column: bugs.createdAt, name: "createdAt" },
       { column: bugs.updatedAt, name: "updatedAt" },
       { column: bugs.severity, name: "title" },
+      { column: bugs.status, name: "status" },
     ];
 
-    const opts: PaginationWithEnhanceDataOptions<
-      typeof bugs.$inferSelect & { images: ImageModel[] },
-      typeof bugs.$inferSelect & { images: BugImageWithUrl[] }
-    > = {
+    const opts: GetBugsOptions = {
       ...options,
-      searchColumns: [bugs.title, bugs.description],
+      searchColumns: [bugs.status],
       enhanceDataFn: enhanceDataWithUrls,
     };
 

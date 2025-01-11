@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import generateMetadata from "@/lib/generate-metadata";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { env } from "@/env";
+import { type JSX } from "react";
 
 export const metadata = generateMetadata({
   title: "Bug Tracker",

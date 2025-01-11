@@ -90,15 +90,12 @@ function searchQueryBuilder(
     throw new Error("No columns provided for search");
   }
 
-  if (columns.length === 1 && simpleSearch) {
-    // use like query for simple search
-    return sql`${columns[0]} ILIKE ${`%${query}%`}`;
-  }
-
-  if (columns.length >= 1 && simpleSearch) {
+  if (simpleSearch) {
     // use like query for simple search
     return sql`(${sql.join(
-      columns.map((column) => sql`${column} ILIKE ${`%${query}%`}`),
+      columns.map(
+        (column) => sql`CAST(${column} AS TEXT) ILIKE ${`%${query}%`}`,
+      ),
       sql` OR `,
     )})`;
   }

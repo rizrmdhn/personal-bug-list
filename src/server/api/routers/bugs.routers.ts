@@ -1,20 +1,11 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { getBugs } from "@/server/queries/bugs.queries";
+import { paginateBugsSchema } from "@/schema/bugs.schema";
 
 export const bugsRouter = createTRPCRouter({
   paginate: protectedProcedure
-    .input(
-      z.object({
-        applicationId: z.string().min(1).max(50),
-        page: z.number().min(1).default(1),
-        pageSize: z.number().min(1).max(50).default(10),
-        sortBy: z.string().optional(),
-        orderBy: z.enum(["asc", "desc"]).optional(),
-        query: z.string().optional(),
-        simpleSearch: z.boolean().optional().default(false),
-      }),
-    )
+    .input(paginateBugsSchema)
     .query(
       async ({
         input: {

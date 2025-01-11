@@ -11,15 +11,11 @@ import {
   type PaginationOptions,
   type SortableColumn,
 } from "../db/utils";
-import {
-  type ApplicationWithPresignedUrls,
-  type SelectApplication,
-} from "@/types/applications.types";
+import { type SelectApplication } from "@/types/applications.types";
 import { type z } from "zod";
 import { type createApplicationSchema } from "@/schema/application.schema";
 import generateApplicationCredentials from "@/lib/generate-credentials";
 import { hash } from "@node-rs/argon2";
-import { generatePresignedUrl } from "../storage";
 
 export async function getApplicationById(id: string) {
   const app = await db.query.applications.findFirst({
@@ -97,61 +93,17 @@ export async function getApplicationList(options: PaginationOptions) {
   }
 }
 
-export async function getDetailApplication(
-  id: string,
-): Promise<ApplicationWithPresignedUrls> {
+export async function getDetailApplication(id: string) {
   const app = await db.query.applications.findFirst({
     where: eq(applications.id, id),
     columns: {
       secret: false,
-    },
-    with: {
-      bugs: {
-        with: {
-          images: true,
-        },
-      },
     },
   });
 
   if (!app) {
     throw new Error("Application not found");
   }
-
-  // Flatten the image URLs generation into a single Promise.all
-  const imagePromises = app.bugs.flatMap((bug) =>
-    bug.images.map(async (image) => ({
-      bugId: bug.id,
-      image: {
-        ...image,
-        url: (await generatePresignedUrl({
-          bucketName: "bugs",
-          fileName: image.file,
-          folderPath: "images",
-        })) as string,
-      },
-    })),
-  );
-
-  const processedImages = await Promise.all(imagePromises);
-
-  // Group images by bugId manually
-  const imagesByBugId = processedImages.reduce<
-    Record<string, Array<(typeof processedImages)[number]["image"]>>
-  >((acc, item) => {
-    acc[item.bugId] = acc[item.bugId] ?? [];
-    acc[item.bugId]?.push(item.image);
-    return acc;
-  }, {});
-
-  app.bugs = app.bugs.map((bug) => ({
-    ...bug,
-    images: imagesByBugId[bug.id] ?? [],
-  }));
-
-  app.bugs = app.bugs.sort((a, b) => {
-    return a.createdAt > b.createdAt ? -1 : 1;
-  });
 
   return app;
 }
