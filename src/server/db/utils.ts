@@ -47,6 +47,17 @@ export interface PaginationOptions {
   readonly simpleSearch?: boolean;
 }
 
+export interface PaginationWithEnhanceDataOptions<T, U> {
+  readonly page?: number;
+  readonly limit?: number;
+  readonly sortBy?: string;
+  readonly sortDirection?: SortDirection;
+  readonly searchColumns?: PgColumn[];
+  readonly query?: string;
+  readonly simpleSearch?: boolean;
+  readonly enhanceDataFn?: (data: T[]) => Promise<U[]>;
+}
+
 type PaginationDirection = "forward" | "backward";
 
 export interface CursorPaginationResult<T> {
@@ -230,6 +241,84 @@ export async function paginate<
 
   return Object.freeze({
     data: data as R[],
+    total,
+    page: validPage,
+    limit: validLimit,
+    hasNextPage: validPage < totalPages,
+    hasPrevPage: validPage > 1,
+    currentPage: validPage,
+    totalPages,
+    pages: generatePageNumbers(validPage, totalPages),
+    sortBy: sortColumn?.name,
+    sortDirection,
+  });
+}
+
+export async function paginateWithEnhanceData<
+  T extends PgSelect,
+  InputRow,
+  OutputRow,
+>(
+  baseQuery: T,
+  table: PgTable,
+  sortableColumns: SortableColumn[],
+  options: PaginationWithEnhanceDataOptions<InputRow, OutputRow>,
+): Promise<PaginationResult<OutputRow>> {
+  const {
+    page = 1,
+    limit = 10,
+    sortBy,
+    sortDirection = "asc",
+    searchColumns = [],
+    query,
+    simpleSearch = false,
+    enhanceDataFn,
+  } = options;
+
+  const validPage = Math.max(1, page);
+  const validLimit = Math.max(1, limit);
+
+  // Find the sortable column that matches either sortBy or orderBy parameter
+  const sortColumn = sortableColumns.find((col) => col.name === sortBy);
+
+  // Use the matched column or default to the first sortable column, or fallback to a default SQL order
+  const orderByColumn = sortColumn
+    ? getSortOrder(sortColumn.column, sortDirection)
+    : sortableColumns[0]
+      ? getSortOrder(sortableColumns[0].column, sortDirection)
+      : sql`1`;
+
+  const paginatedQuery = buildPaginatedQuery(
+    baseQuery,
+    orderByColumn,
+    validPage,
+    validLimit,
+    searchColumns,
+    query,
+    simpleSearch,
+  );
+
+  const countQuery = db
+    .select({
+      total: sql<number>`count(*)::integer`,
+    })
+    .from(table);
+
+  const [rawData, [countResult]] = await Promise.all([
+    paginatedQuery,
+    countQuery,
+  ]);
+
+  const total = countResult?.total ?? 0;
+  const totalPages = Math.ceil(total / validLimit);
+
+  // Apply the enhance function if provided
+  const data = enhanceDataFn
+    ? await enhanceDataFn(rawData as InputRow[])
+    : (rawData as unknown as OutputRow[]);
+
+  return Object.freeze({
+    data: data,
     total,
     page: validPage,
     limit: validLimit,

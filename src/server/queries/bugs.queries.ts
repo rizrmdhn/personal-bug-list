@@ -6,11 +6,15 @@ import { type z } from "zod";
 import { bugImages, bugs } from "../db/schema";
 import { eq, sql } from "drizzle-orm";
 import {
-  paginate,
-  type PaginationOptions,
+  paginateWithEnhanceData,
+  type PaginationWithEnhanceDataOptions,
   type SortableColumn,
 } from "../db/utils";
-import { type ImageModel } from "@/types/bug-images.types";
+import {
+  type BugImageWithUrl,
+  type ImageModel,
+} from "@/types/bug-images.types";
+import { generatePresignedUrl } from "../storage";
 
 export async function getDetailBug(bugId: string) {
   const details = await db.query.bugs.findFirst({
@@ -23,8 +27,38 @@ export async function getDetailBug(bugId: string) {
   return details;
 }
 
-export async function getBugs(appId: string, options: PaginationOptions) {
+export async function getBugs(
+  appId: string,
+  options: PaginationWithEnhanceDataOptions<
+    typeof bugs.$inferSelect & { images: ImageModel[] },
+    typeof bugs.$inferSelect & { images: BugImageWithUrl[] }
+  >,
+) {
   try {
+    const enhanceDataWithUrls = async (
+      items: (typeof bugs.$inferSelect & { images: ImageModel[] })[],
+    ): Promise<
+      (typeof bugs.$inferSelect & { images: BugImageWithUrl[] })[]
+    > => {
+      return Promise.all(
+        items.map(async (item) => ({
+          ...item,
+          images: await Promise.all(
+            item.images.map(
+              async (image): Promise<BugImageWithUrl> => ({
+                ...image,
+                url: await generatePresignedUrl({
+                  bucketName: "bugs",
+                  fileName: image.file,
+                  folderPath: "images",
+                }),
+              }),
+            ),
+          ),
+        })),
+      );
+    };
+
     const baseQuery = db
       .select({
         id: bugs.id,
@@ -32,21 +66,23 @@ export async function getBugs(appId: string, options: PaginationOptions) {
         description: bugs.description,
         severity: bugs.severity,
         appId: bugs.appId,
+        tags: bugs.tags,
+        status: bugs.status,
         createdAt: bugs.createdAt,
         updatedAt: bugs.updatedAt,
         images: sql<ImageModel[]>`
-      COALESCE(
-        json_agg(
-          CASE WHEN ${bugImages.id} IS NOT NULL THEN
-            json_build_object(
-              'id', ${bugImages.id},
-              'file', ${bugImages.file}
-            )
-          END
-        ) FILTER (WHERE ${bugImages.id} IS NOT NULL),
-        '[]'
-      )
-    `,
+          COALESCE(
+            json_agg(
+              CASE WHEN ${bugImages.id} IS NOT NULL THEN
+                json_build_object(
+                  'id', ${bugImages.id},
+                  'file', ${bugImages.file}
+                )
+              END
+            ) FILTER (WHERE ${bugImages.id} IS NOT NULL),
+            '[]'
+          )
+        `,
       })
       .from(bugs)
       .where(eq(bugs.appId, appId))
@@ -57,6 +93,8 @@ export async function getBugs(appId: string, options: PaginationOptions) {
         bugs.description,
         bugs.severity,
         bugs.appId,
+        bugs.tags,
+        bugs.status,
         bugs.createdAt,
         bugs.updatedAt,
       )
@@ -68,17 +106,20 @@ export async function getBugs(appId: string, options: PaginationOptions) {
       { column: bugs.severity, name: "title" },
     ];
 
-    const opts: PaginationOptions = {
+    const opts: PaginationWithEnhanceDataOptions<
+      typeof bugs.$inferSelect & { images: ImageModel[] },
+      typeof bugs.$inferSelect & { images: BugImageWithUrl[] }
+    > = {
       ...options,
       searchColumns: [bugs.title, bugs.description],
+      enhanceDataFn: enhanceDataWithUrls,
     };
 
-    return await paginate<typeof baseQuery, typeof bugs.$inferSelect>(
-      baseQuery,
-      bugs,
-      sortableColumns,
-      opts,
-    );
+    return await paginateWithEnhanceData<
+      typeof baseQuery,
+      typeof bugs.$inferSelect & { images: ImageModel[] },
+      typeof bugs.$inferSelect & { images: BugImageWithUrl[] }
+    >(baseQuery, bugs, sortableColumns, opts);
   } catch (error) {
     console.error("Application list fetch error:", error);
     throw new Error(
