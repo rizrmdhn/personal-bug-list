@@ -12,7 +12,7 @@ const BugsSection: React.FC<BugsSectionProps> = () => {
 
   const [page, setPage] = React.useState<number>(1);
 
-  const { data, isPending } = api.bugs.paginate.useQuery({
+  const { data, isPending, isError, error } = api.bugs.paginate.useQuery({
     applicationId: params.appId,
     page,
     pageSize: 10,
@@ -25,7 +25,13 @@ const BugsSection: React.FC<BugsSectionProps> = () => {
         <Button variant="outline">Filter</Button>
       </div>
 
-      <BugsList data={data} isPending={isPending} onPageChange={setPage} />
+      <BugsList
+        data={data}
+        isPending={isPending}
+        isError={isError}
+        errorMessages={error?.message ?? ""}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

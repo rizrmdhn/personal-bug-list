@@ -7,25 +7,41 @@ import { cn } from "@/lib/utils";
 import { type BugModelWithPresignedUrls } from "@/types/bugs.types";
 import { type PaginationResult } from "@/server/db/utils";
 import { format } from "date-fns";
-import { Clock, ImageIcon } from "lucide-react";
+import { Clock, ImageIcon, Loader2 } from "lucide-react";
 
 // components/BugsList.tsx
 interface BugsListProps {
   data: PaginationResult<BugModelWithPresignedUrls> | undefined;
   isPending: boolean;
+  isError: boolean;
+  errorMessages: string;
   onPageChange: (page: number) => void;
 }
 
 export const BugsList: React.FC<BugsListProps> = ({
   data,
   isPending,
+  isError,
+  errorMessages,
   onPageChange,
 }) => {
   if (isPending) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
+        <CardContent className="flex flex-col items-center justify-center gap-4 py-12">
           <div className="animate-pulse text-muted-foreground">Loading...</div>
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center gap-4 py-12">
+          <div className="text-muted-foreground">Error fetching data</div>
+          <div className="text-muted-foreground">{errorMessages}</div>
         </CardContent>
       </Card>
     );
