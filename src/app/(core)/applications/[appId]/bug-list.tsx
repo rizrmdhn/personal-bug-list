@@ -105,7 +105,7 @@ export const BugsList: React.FC<BugsListProps> = ({
                       {bug.images.map((image) => (
                         <div
                           key={image.id}
-                          className="relative aspect-video overflow-hidden rounded-lg border"
+                          className="relative aspect-video overflow-hidden rounded-lg border hover:cursor-pointer"
                           onClick={() => {
                             router.push(
                               `/applications/${bug.appId}/images/${bug.id}?currentImage=${image.id}`,
