@@ -9,13 +9,19 @@ export const metadata = generateMetadata({
 interface ApplicationsLayoutProps {
   children: React.ReactNode;
   sheet: React.ReactNode;
+  modal: React.ReactNode;
 }
 
-export default function layout({ children, sheet }: ApplicationsLayoutProps) {
+export default function layout({
+  children,
+  sheet,
+  modal,
+}: ApplicationsLayoutProps) {
   return (
     <>
       {children}
       {sheet}
+      {modal}
     </>
   );
 }

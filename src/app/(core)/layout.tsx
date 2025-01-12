@@ -54,6 +54,7 @@ export default async function CoreLayout({ children, sheet }: CoreLayoutProps) {
           {children}
           {sheet}
           <div id="sheet-root" />
+          <div id="dialog-root" />
         </div>
       </SidebarInset>
     </SidebarProvider>
