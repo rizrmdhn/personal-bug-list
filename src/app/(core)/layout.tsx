@@ -8,6 +8,7 @@ import { getCurrentSession } from "@/lib/sessions";
 import { api, HydrateClient } from "@/trpc/server";
 import { type NavMainItem } from "@/types/side-bar.types";
 import { HomeIcon, ListTodo } from "lucide-react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 interface CoreLayoutProps {
@@ -40,7 +41,9 @@ export default async function CoreLayout({ children, sheet }: CoreLayoutProps) {
   api.auth.details.prefetch();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      defaultOpen={(await cookies()).get("sidebar:state")?.value === "true"}
+    >
       <HydrateClient>
         <AppSidebar data={menuItems} />
       </HydrateClient>

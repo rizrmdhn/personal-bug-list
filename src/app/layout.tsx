@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <head>
-        {env.ENABLE_REACT_SCAN && (
+        {env.ENABLE_REACT_SCAN && env.NODE_ENV !== "production" && (
           <script
             src="https://unpkg.com/react-scan/dist/auto.global.js"
             async
