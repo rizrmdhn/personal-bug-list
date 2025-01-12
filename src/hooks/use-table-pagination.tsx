@@ -1,5 +1,4 @@
-// hooks/useTablePagination.ts
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface PaginationData<T> {
   data: T[];
@@ -31,12 +30,12 @@ export function useTablePagination<T>({
   limit,
 }: UseTablePaginationProps<T>): UseTablePaginationReturn<T> {
   // Keep track of the last successful data response
-  const lastDataRef = useRef<PaginationData<T> | null>(null);
+  const [lastData, setLastData] = useState<PaginationData<T> | null>(null);
 
   // Update the last successful data when we get a new response
   useEffect(() => {
     if (data) {
-      lastDataRef.current = data;
+      setLastData(data);
     }
   }, [data]);
 
@@ -45,26 +44,34 @@ export function useTablePagination<T>({
     () => ({
       data: [] as T[],
       currentPage: page,
-      totalPages: Math.max(1, lastDataRef.current?.totalPages ?? 1),
-      total: lastDataRef.current?.total ?? 0,
-      pages: lastDataRef.current?.pages ?? [1],
+      totalPages: Math.max(1, lastData?.totalPages ?? 1),
+      total: lastData?.total ?? 0,
+      pages: lastData?.pages ?? [1],
       limit,
-      hasNextPage: lastDataRef.current?.hasNextPage ?? false,
-      hasPrevPage: lastDataRef.current?.hasPrevPage ?? false,
+      hasNextPage: lastData?.hasNextPage ?? false,
+      hasPrevPage: lastData?.hasPrevPage ?? false,
     }),
-    [page, limit],
+    [
+      page,
+      lastData?.totalPages,
+      lastData?.total,
+      lastData?.pages,
+      lastData?.hasNextPage,
+      lastData?.hasPrevPage,
+      limit,
+    ],
   );
 
   // Memoize the current pagination state
   const paginationState = useMemo(() => {
-    if (isPending && lastDataRef.current) {
+    if (isPending && lastData) {
       return {
-        ...lastDataRef.current,
+        ...lastData,
         data: [], // Clear data during loading while keeping pagination state
       };
     }
     return data ?? defaultPaginationState;
-  }, [isPending, data, defaultPaginationState]);
+  }, [isPending, lastData, data, defaultPaginationState]);
 
   // Memoize the table data
   const tableData = useMemo(

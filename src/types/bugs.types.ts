@@ -1,7 +1,7 @@
 import { type bugs } from "@/server/db/schema";
 import { type InferSelectModel } from "drizzle-orm";
-import { BugImageWithUrl, type ImageModel } from "./bug-images.types";
-import { PaginationWithEnhanceDataOptions } from "@/server/db/utils";
+import { type BugImageWithUrl, type ImageModel } from "./bug-images.types";
+import { type PaginationWithEnhanceDataOptions } from "@/server/db/utils";
 
 export type BugModel = InferSelectModel<typeof bugs>;
 
