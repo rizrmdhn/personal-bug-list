@@ -8,8 +8,8 @@ import { type BugModelWithPresignedUrls } from "@/types/bugs.types";
 import { type PaginationResult } from "@/server/db/utils";
 import { format } from "date-fns";
 import { Clock, ImageIcon, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-// components/BugsList.tsx
 interface BugsListProps {
   data: PaginationResult<BugModelWithPresignedUrls> | undefined;
   isPending: boolean;
@@ -25,6 +25,8 @@ export const BugsList: React.FC<BugsListProps> = ({
   errorMessages,
   onPageChange,
 }) => {
+  const router = useRouter();
+
   if (isPending) {
     return (
       <Card>
@@ -104,6 +106,11 @@ export const BugsList: React.FC<BugsListProps> = ({
                         <div
                           key={image.id}
                           className="relative aspect-video overflow-hidden rounded-lg border"
+                          onClick={() => {
+                            router.push(
+                              `/applications/${bug.appId}/images/${bug.id}?currentImage=${image.id}`,
+                            );
+                          }}
                         >
                           <img
                             src={image.url}

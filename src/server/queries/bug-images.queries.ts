@@ -1,7 +1,26 @@
 import "server-only";
 
-import { type DBType } from "../db";
+import { db, type DBType } from "../db";
 import { bugImages } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { generatePresignedUrl } from "../storage";
+
+export async function getBugImages(bugId: string) {
+  const images = await db.query.bugImages.findMany({
+    where: eq(bugImages.bugId, bugId),
+  });
+
+  return Promise.all(
+    images.map(async (image) => ({
+      ...image,
+      url: await generatePresignedUrl({
+        bucketName: "bugs",
+        fileName: image.file,
+        folderPath: "images",
+      }),
+    })),
+  );
+}
 
 export async function createBugImages(db: DBType, bugId: string, file: string) {
   try {

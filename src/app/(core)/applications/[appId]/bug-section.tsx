@@ -15,7 +15,6 @@ import {
 import { AVALIABLE_BUG_STATUS } from "@/lib/constants";
 import { type PaginateBugsSchemaType } from "@/schema/bugs.schema";
 
-// components/BugsSection.tsx
 interface BugsSectionProps {}
 
 const BugsSection: React.FC<BugsSectionProps> = () => {
