@@ -21,17 +21,18 @@ const BugsSection: React.FC<BugsSectionProps> = () => {
   const params = useParams<{ appId: string }>();
 
   const [page, setPage] = React.useState<number>(1);
+  const [pageSize, setPageSize] = React.useState<number>(10);
   const [status, setStatus] = React.useState<string | undefined>(undefined);
 
   const queryParams: PaginateBugsSchemaType = React.useMemo(
     () => ({
       applicationId: params.appId,
       page,
-      pageSize: 10,
+      pageSize,
       simpleSearch: true,
       query: status ? status : undefined,
     }),
-    [params.appId, page, status],
+    [params.appId, page, status, pageSize],
   );
 
   const { data, isPending, isError, error } =
@@ -46,7 +47,23 @@ const BugsSection: React.FC<BugsSectionProps> = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Reported Bugs</h2>
         <div className="flex gap-4">
-          <Button variant="outline">Filter</Button>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => setPageSize(parseInt(value))}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue placeholder="Select page size" />
+            </SelectTrigger>
+            <SelectContent className="w-32">
+              <SelectGroup>
+                {[5, 10, 20, 50].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <Select
             value={status}
             onValueChange={(value) => handleStatusChange(value)}
