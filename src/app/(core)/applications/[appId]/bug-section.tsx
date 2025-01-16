@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
 import React from "react";
