@@ -21,7 +21,11 @@ export default function RootLayout({
   children,
 }: Readonly<RootLayoutProps>): JSX.Element {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
+    <html
+      lang="en"
+      className={`${GeistSans.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {env.ENABLE_REACT_SCAN && env.NODE_ENV !== "production" && (
           <script
