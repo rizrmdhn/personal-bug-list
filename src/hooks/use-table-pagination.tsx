@@ -23,6 +23,33 @@ interface UseTablePaginationReturn<T> {
   paginationProps: Omit<PaginationData<T>, "data">;
 }
 
+/**
+ * A custom hook for handling table pagination state and data.
+ *
+ * @template T - The type of data items in the table
+ *
+ * @param {Object} props - The hook properties
+ * @param {PaginationData<T>} props.data - The current pagination data
+ * @param {boolean} props.isPending - Whether data is currently being loaded
+ * @param {number} props.page - The current page number
+ * @param {number} props.limit - The number of items per page
+ *
+ * @returns {Object} An object containing:
+ *   - tableData: The current page's data items
+ *   - paginationProps: An object containing pagination state:
+ *     - currentPage: The current page number
+ *     - totalPages: Total number of pages
+ *     - total: Total number of items
+ *     - pages: Array of available page numbers
+ *     - limit: Number of items per page
+ *     - hasNextPage: Whether there is a next page
+ *     - hasPrevPage: Whether there is a previous page
+ *
+ * @remarks
+ * This hook maintains the last successful data response to provide a smooth loading state
+ * and fallback values when new data is being fetched. During loading states, it preserves
+ * pagination information while clearing the data array.
+ */
 export function useTablePagination<T>({
   data,
   isPending,

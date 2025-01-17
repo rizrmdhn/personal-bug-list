@@ -48,6 +48,28 @@ interface PaginateParamsOptions {
   columnSortOrder?: string;
 }
 
+/**
+ * Custom hook for managing pagination parameters in URL query string
+ * @param {Object} options - The options for pagination parameters
+ * @param {string} [options.q=""] - Initial search query string
+ * @param {number} [options.pageNumber=1] - Initial page number
+ * @param {number} [options.pageLimit=10] - Initial page size limit
+ * @param {string} [options.columnSortBy="name"] - Initial column to sort by
+ * @param {string} [options.columnSortOrder="asc"] - Initial sort order direction
+ * @returns {PaginateParams} Object containing pagination state and setter functions
+ * @returns {string} returns.query - Current search query
+ * @returns {Function} returns.setQuery - Function to update search query
+ * @returns {number} returns.page - Current page number
+ * @returns {Function} returns.setPage - Function to update page number
+ * @returns {number} returns.pageSize - Current page size
+ * @returns {Function} returns.setPageSize - Function to update page size
+ * @returns {string} returns.sortBy - Current sort column
+ * @returns {Function} returns.setSortBy - Function to update sort column
+ * @returns {("asc"|"desc")} returns.sortOrder - Current sort order
+ * @returns {Function} returns.setSortOrder - Function to update sort order
+ * @returns {boolean} returns.simpleSearch - Current simple search state
+ * @returns {Function} returns.setSimpleSearch - Function to update simple search state
+ */
 export default function usePaginateParams({
   q = "",
   pageNumber = 1,
