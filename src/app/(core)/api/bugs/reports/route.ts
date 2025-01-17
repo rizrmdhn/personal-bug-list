@@ -42,7 +42,7 @@ async function handleJsonRequest(
 
   await Promise.all(
     safeBase64Image.file.map(async (image) => {
-      const fileName = `${app.id}-${getUnixTime(new Date())}`;
+      const fileName = `${app.id}-${getUnixTime(new Date())}-${Date.now()}`;
       const file = await base64ToFile(image, {
         filename: fileName,
       });
@@ -83,7 +83,7 @@ async function handleFormDataRequest(
   await Promise.all(
     safeFileList.file.map(async (file) => {
       const extension = getFileExtension(file.type);
-      const fileName = `${app.id}-${getUnixTime(new Date())}${extension}`;
+      const fileName = `${app.id}-${getUnixTime(new Date())}-${Date.now()}${extension}`;
       await saveFileInBucket({
         bucketName: "bugs",
         fileName,
