@@ -1,5 +1,5 @@
 import { seed } from "drizzle-seed";
-import { users } from "../server/db/schema";
+import { users, applications } from "../server/db/schema";
 import { seederHelper } from "./helper";
 import { hash } from "@node-rs/argon2";
 
@@ -13,6 +13,8 @@ async function main() {
       },
     },
   }));
+
+  await seed(seederHelper, { applications }, { count: 100 });
 }
 
 main()
